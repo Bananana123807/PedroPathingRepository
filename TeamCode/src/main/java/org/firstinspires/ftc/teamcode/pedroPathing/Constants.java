@@ -36,7 +36,8 @@ public class Constants {
                     )
             )
             .forwardPodY(5)
-            .strafePodX(4);
+            .strafePodX(4)
+            .strafeEncoderDirection(Encoder.REVERSE);
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)

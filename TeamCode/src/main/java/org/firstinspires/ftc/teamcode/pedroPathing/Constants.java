@@ -36,7 +36,9 @@ public class Constants {
                     )
             )
             .forwardPodY(5)
-            .strafePodX(4);
+            .strafePodX(4)
+            .forwardTicksToInches(0.00301389)
+            .strafeTicksToInches(0.003402);
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)

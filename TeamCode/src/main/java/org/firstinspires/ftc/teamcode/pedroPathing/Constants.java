@@ -40,7 +40,6 @@ public class Constants {
             .strafePodX(4)
             .strafeEncoderDirection(Encoder.REVERSE)
             .forwardEncoderDirection(Encoder.REVERSE);
-
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)

@@ -43,7 +43,6 @@ public class Constants {
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             .xVelocity(38.90905595508234)
             .yVelocity(34.1788463030067);
-
     public static TwoWheelConstants localizerConstants = new TwoWheelConstants()
             .forwardEncoder_HardwareMapName("y-odo")
             .strafeEncoder_HardwareMapName("x-odo")

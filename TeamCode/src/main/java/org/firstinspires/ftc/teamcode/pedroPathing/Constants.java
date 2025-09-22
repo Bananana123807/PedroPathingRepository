@@ -2,6 +2,9 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 //commit comment
 
+import com.bylazar.configurables.annotations.Configurable;
+import com.pedropathing.control.FilteredPIDFCoefficients;
+import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -13,6 +16,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+@Configurable
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(5.55)
@@ -20,7 +24,11 @@ public class Constants {
             .lateralZeroPowerAcceleration(-65.34704819224949)
             .useSecondaryDrivePIDF(true)
             .useSecondaryHeadingPIDF(true)
-            .useSecondaryDrivePIDF(true);
+            .useSecondaryDrivePIDF(true)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.05, 0, 0, 0))
+            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0, 0, 0, 0))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0.01, 0))
+            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(5, 0, 0.01, 0.08));
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
     public static MecanumConstants driveConstants = new MecanumConstants()

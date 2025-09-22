@@ -12,9 +12,15 @@ import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(5.55);
+            .mass(5.55)
+            .forwardZeroPowerAcceleration(-41.96283398228088)
+            .lateralZeroPowerAcceleration(-65.34704819224949)
+            .useSecondaryDrivePIDF(true)
+            .useSecondaryHeadingPIDF(true)
+            .useSecondaryDrivePIDF(true);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -42,8 +48,8 @@ public class Constants {
             )
             .forwardPodY(5)
             .strafePodX(4)
-            .forwardTicksToInches(0.00301389)
-            .strafeTicksToInches(0.003402)
+            .forwardTicksToInches(0.0032527)
+            .strafeTicksToInches(0.0029792)
             .forwardEncoderDirection(Encoder.FORWARD)
             .strafeEncoderDirection(Encoder.REVERSE);
     public static Follower createFollower(HardwareMap hardwareMap) {
@@ -54,4 +60,3 @@ public class Constants {
                 .build();
     }
 }
-

@@ -45,7 +45,7 @@ public class Constants {
             .forwardTicksToInches(0.00301389)
             .strafeTicksToInches(0.003402)
             .forwardEncoderDirection(Encoder.FORWARD)
-            .strafeEncoderDirection(Encoder.FORWARD);
+            .strafeEncoderDirection(Encoder.REVERSE);
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)

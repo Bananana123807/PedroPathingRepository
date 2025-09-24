@@ -19,9 +19,9 @@ public class OCE_auto extends OpMode {
 
     private int pathState;
 
-    private final Pose startPose = new Pose(56, 8); // Start Pose of our robot.
-    private final Pose scorePose = new Pose(121.55745175892339, 120.95210400186323, Math.toRadians(60));
-    private final Pose pickupPose = new Pose(106.04280740745895, 84.04833831148666, Math.toRadians(0));
+    private final Pose startPose = new Pose(0, 0); // Start Pose of our robot.
+    private final Pose scorePose = new Pose(0, 10);
+    private final Pose pickupPose = new Pose(0, 0);
 
     private PathChain scorePreload;
     private PathChain grabPickup1;

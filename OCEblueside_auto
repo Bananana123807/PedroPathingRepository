@@ -1,0 +1,213 @@
+package org.firstinspires.ftc.teamcode.pedroPathing;
+
+import com.bylazar.configurables.annotations.Configurable;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
+import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
+@Configurable
+@Autonomous(name = "OCEblueside_auto", group = "auto")
+public class OCEblueside_auto extends OpMode {
+
+    private Follower follower;
+    private Timer pathTimer, actionTimer, opmodeTimer;
+
+    private int pathState;
+
+    private final Pose startPose = new Pose(56, 8); // Start Pose of our robot.
+    private final Pose scorePose = new Pose(94.176, 99.452);
+    private final Pose pickupPose = new Pose(114.497, 119.577);
+    private PathBuilder builder;
+    private PathChain line1;
+    private PathChain line2;
+    private PathChain line3;
+    private PathChain line4;
+    private PathChain line5;
+    private PathChain line6;
+    private PathChain line7;
+    private PathChain line8;
+    private PathChain line9;
+    private PathChain line10;
+    private PathChain line11;
+
+
+    public void AutoPaths() {
+        
+
+        line1 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(56.000, 8.000),
+                                new Pose(94.176, 99.452),
+                                new Pose(114.497, 119.577)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line2 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(114.497, 119.577),
+                                new Pose(51.973, 80.304),
+                                new Pose(122.312, 83.430)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line3 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(122.312, 83.430),
+                                new Pose(129.151, 97.498),
+                                new Pose(111.761, 100.233)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line4 = builder
+                .addPath(
+                        new BezierLine(new Pose(111.761, 100.233), new Pose(114.301, 119.577))
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line5 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(114.301, 119.577),
+                                new Pose(106.290, 66.822),
+                                new Pose(122.312, 59.398)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line6 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(122.312, 59.398),
+                                new Pose(115.278, 72.098),
+                                new Pose(122.703, 83.235)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line7 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(122.703, 83.235),
+                                new Pose(127.001, 102.578),
+                                new Pose(114.497, 119.772)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line8 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(114.497, 119.772),
+                                new Pose(11.332, 27.745),
+                                new Pose(122.703, 35.170)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line9 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(122.703, 35.170),
+                                new Pose(109.417, 39.859),
+                                new Pose(122.312, 59.007)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line10 = builder
+                .addPath(
+                        new BezierCurve(
+                                new Pose(122.312, 59.007),
+                                new Pose(55.000, 61.000),
+                                new Pose(111.761, 100.429)
+                        )
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+
+        line11 = builder
+                .addPath(
+                        new BezierLine(new Pose(111.761, 100.429), new Pose(114.497, 119.577))
+                )
+                .setTangentHeadingInterpolation()
+                .build();
+    }
+
+//    public void autonomousPathUpdate() {
+//        switch (pathState) {
+//            case 0:
+//                follower.followPath(scorePreload, true);
+//                setPathState(1);
+//                break;
+//            case 1:
+//                if (!follower.isBusy()) {
+//                    follower.followPath(grabPickup1, true);
+//                    setPathState(2);
+//                }
+//                break;
+//            case 2:
+//                if (!follower.isBusy()) {
+//                    follower.followPath(scorePickup1, true);
+//                    setPathState(3);
+//                }
+//                break;
+//        }
+//    }
+
+    public void setPathState(int pState) {
+        pathState = pState;
+        pathTimer.resetTimer();
+    }
+
+    /**
+     * This is the main loop of the OpMode, it will run repeatedly after clicking "Play".
+     **/
+    @Override
+    public void loop() {
+
+        follower.update();
+        autonomousPathUpdate();
+
+        // Feedback to Driver Hub for debugging
+        telemetry.addData("path state", pathState);
+        telemetry.addData("x", follower.getPose().getX());
+        telemetry.addData("y", follower.getPose().getY());
+        telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.update();
+    }
+
+
+
+    @Override
+    public void init() {
+        pathTimer = new Timer();
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
+
+
+        follower = Constants.createFollower(hardwareMap);
+        AutoPaths();
+        follower.setStartingPose(startPose);
+
+    }
+}

@@ -29,8 +29,6 @@ public class Constants {
             .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0, 0, 0, 0))
             .headingPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0, 0.01))
             .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(5, 0, 0.01, 0.08))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.025,0,0.00001,0.6,0.01))
-            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(0.02,0,0.000001,0.6,0.01))
             .centripetalScaling(0.0005);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
@@ -58,8 +56,8 @@ public class Constants {
             )
             .forwardPodY(5)
             .strafePodX(4)
-            .forwardTicksToInches(0.0032527)
-            .strafeTicksToInches(0.0029792)
+            .forwardTicksToInches(0.0030059)
+            .strafeTicksToInches(0.0044)
             .forwardEncoderDirection(Encoder.FORWARD)
             .strafeEncoderDirection(Encoder.REVERSE);
     public static Follower createFollower(HardwareMap hardwareMap) {

@@ -4,11 +4,10 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 @Configurable
 @Autonomous(name = "Example Auto", group = "Examples")
@@ -18,16 +17,15 @@ public class OCE_auto extends OpMode {
     private Timer pathTimer, actionTimer, opmodeTimer;
 
     private int pathState;
-
-    private final Pose startPose = new Pose(0, 0, Math.toRadians(90));
-    private final Pose scorePose = new Pose(0, 10, Math.toRadians(90));
-    private final Pose pickupPose = new Pose(0, 0, Math.toRadians(90));
+    private final Pose startPose  = new Pose(0, 0, 0);
+    private final Pose scorePose  = new Pose(0, 10, 0);
+    private final Pose pickupPose = new Pose(10, 10, 0);
 
     private PathChain scorePreload;
     private PathChain grabPickup1;
     private PathChain scorePickup1;
-    public void buildPaths() {
 
+    public void buildPaths() {
         scorePreload = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, scorePose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading())
@@ -70,23 +68,17 @@ public class OCE_auto extends OpMode {
         pathTimer.resetTimer();
     }
 
-    /**
-     * This is the main loop of the OpMode, it will run repeatedly after clicking "Play".
-     **/
     @Override
     public void loop() {
-
         follower.update();
         autonomousPathUpdate();
 
-        // Feedback to Driver Hub for debugging
         telemetry.addData("path state", pathState);
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.addData("FTC-X (right)", follower.getPose().getY());
+        telemetry.addData("FTC-Y (forward)", follower.getPose().getX());
+        telemetry.addData("FTC-Heading (deg)", Math.toDegrees(follower.getPose().getHeading()) - 90);
         telemetry.update();
     }
-
 
     @Override
     public void init() {
@@ -94,10 +86,10 @@ public class OCE_auto extends OpMode {
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
 
-
         follower = Constants.createFollower(hardwareMap);
-        buildPaths();
+
         follower.setStartingPose(startPose);
 
+        buildPaths();
     }
 }

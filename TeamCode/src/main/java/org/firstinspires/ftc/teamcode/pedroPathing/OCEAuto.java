@@ -157,15 +157,9 @@ public void buildPaths() {
     }
 
     @Override
-    public void init_loop() {}
-
-    @Override
     public void start() {
         opmodeTimer.resetTimer();
         setPathState(0);
     }
-
-    @Override
-    public void stop() {}
 }
 

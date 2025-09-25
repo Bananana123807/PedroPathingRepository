@@ -8,40 +8,90 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
+import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-@Configurable
-@Autonomous(name = "Example Auto", group = "Examples")
+@Autonomous(name = "OCEauto", group = "Autonomous's")
 public class OCE_auto extends OpMode {
-
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
-
     private int pathState;
-    private final Pose startPose  = new Pose(0, 0, 0);
-    private final Pose scorePose  = new Pose(0, 10, 0);
-    private final Pose pickupPose = new Pose(10, 10, 0);
+    
+    private final Pose startPose  = new Pose(56, 8, Math.toRadians(90);
 
-    private PathChain scorePreload;
-    private PathChain grabPickup1;
-    private PathChain scorePickup1;
+public void buildPaths() {
+        public static PathBuilder builder = new PathBuilder();
 
-    public void buildPaths() {
-        scorePreload = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, scorePose))
-                .setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading())
-                .build();
+        public static PathChain line1 = builder
+            .addPath(
+                new BezierLine(new Pose(56.000, 8.000), new Pose(116.165, 120.349))
+            )
+            .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(40))
+            .build();
 
-        grabPickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, pickupPose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), pickupPose.getHeading())
-                .build();
+        public static PathChain line2 = builder
+            .addPath(
+                new BezierCurve(
+                    new Pose(116.165, 120.349),
+                    new Pose(80.286, 83.021),
+                    new Pose(117.613, 83.665)
+                )
+            )
+            .setTangentHeadingInterpolation()
+            .build();
 
-        scorePickup1 = follower.pathBuilder()
-                .addPath(new BezierLine(pickupPose, scorePose))
-                .setLinearHeadingInterpolation(pickupPose.getHeading(), scorePose.getHeading())
-                .build();
+        public static PathChain line3 = builder
+            .addPath(
+                new BezierLine(new Pose(117.613, 83.665), new Pose(116.165, 120.509))
+            )
+            .setConstantHeadingInterpolation(Math.toRadians(40))
+            .build();
+
+        public static PathChain line4 = builder
+            .addPath(
+                new BezierCurve(
+                    new Pose(116.165, 120.509),
+                    new Pose(67.897, 58.726),
+                    new Pose(117.131, 59.209)
+                )
+            )
+            .setTangentHeadingInterpolation()
+            .build();
+
+        public static PathChain line5 = builder
+            .addPath(
+                new BezierLine(new Pose(117.131, 59.209), new Pose(116.165, 120.349))
+            )
+            .setConstantHeadingInterpolation(Math.toRadians(40))
+            .build();
+
+        public static PathChain line6 = builder
+            .addPath(
+                new BezierCurve(
+                    new Pose(116.165, 120.349),
+                    new Pose(73.046, 33.788),
+                    new Pose(117.453, 35.397)
+                )
+            )
+            .setTangentHeadingInterpolation()
+            .build();
+
+
+        public static PathChain line7 = builder
+            .addPath(
+                new BezierLine(new Pose(117.453, 35.397), new Pose(116.326, 120.349))
+            )
+            .setConstantHeadingInterpolation(Math.toRadians(40))
+            .build();
+        }
     }
-
+    
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:

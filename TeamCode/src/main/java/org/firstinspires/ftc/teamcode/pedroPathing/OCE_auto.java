@@ -24,18 +24,19 @@ public class OCE_auto extends OpMode {
     private int pathState;
     
     private final Pose startPose  = new Pose(56, 8, Math.toRadians(90);
-
+    private PathChain line1, line2, line3, line4, line5, line6, line7; 
+    
 public void buildPaths() {
         public static PathBuilder builder = new PathBuilder();
 
-        public static PathChain line1 = builder
+        line1 = follower.pathBuilder()
             .addPath(
                 new BezierLine(new Pose(56.000, 8.000), new Pose(116.165, 120.349))
             )
             .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(40))
             .build();
 
-        public static PathChain line2 = builder
+        line2 = follower.pathBuilder()
             .addPath(
                 new BezierCurve(
                     new Pose(116.165, 120.349),
@@ -46,14 +47,14 @@ public void buildPaths() {
             .setTangentHeadingInterpolation()
             .build();
 
-        public static PathChain line3 = builder
+        line3 = follower.pathBuilder()
             .addPath(
                 new BezierLine(new Pose(117.613, 83.665), new Pose(116.165, 120.509))
             )
             .setConstantHeadingInterpolation(Math.toRadians(40))
             .build();
 
-        public static PathChain line4 = builder
+        line4 = follower.pathBuilder()
             .addPath(
                 new BezierCurve(
                     new Pose(116.165, 120.509),
@@ -64,14 +65,14 @@ public void buildPaths() {
             .setTangentHeadingInterpolation()
             .build();
 
-        public static PathChain line5 = builder
+        line5 = follower.pathBuilder()
             .addPath(
                 new BezierLine(new Pose(117.131, 59.209), new Pose(116.165, 120.349))
             )
             .setConstantHeadingInterpolation(Math.toRadians(40))
             .build();
 
-        public static PathChain line6 = builder
+        line6 = follower.pathBuilder()
             .addPath(
                 new BezierCurve(
                     new Pose(116.165, 120.349),
@@ -83,7 +84,7 @@ public void buildPaths() {
             .build();
 
 
-        public static PathChain line7 = builder
+        line7 = follower.pathBuilder()
             .addPath(
                 new BezierLine(new Pose(117.453, 35.397), new Pose(116.326, 120.349))
             )
@@ -120,13 +121,14 @@ public void buildPaths() {
 
     @Override
     public void loop() {
+        // These loop the movements of the robot, these must be called continuously in order to work
         follower.update();
         autonomousPathUpdate();
-
+        // Feedback to Driver Hub for debugging
         telemetry.addData("path state", pathState);
-        telemetry.addData("FTC-X (right)", follower.getPose().getY());
-        telemetry.addData("FTC-Y (forward)", follower.getPose().getX());
-        telemetry.addData("FTC-Heading (deg)", Math.toDegrees(follower.getPose().getHeading()) - 90);
+        telemetry.addData("x", follower.getPose().getX());
+        telemetry.addData("y", follower.getPose().getY());
+        telemetry.addData("heading", follower.getPose().getHeading());
         telemetry.update();
     }
 
@@ -135,11 +137,19 @@ public void buildPaths() {
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
-
         follower = Constants.createFollower(hardwareMap);
-
-        follower.setStartingPose(startPose);
-
         buildPaths();
+        follower.setStartingPose(startPose);
     }
-}
+
+    @Override
+    public void init_loop() {}
+
+    @Override
+    public void start() {
+        opmodeTimer.resetTimer();
+        setPathState(0);
+    }
+
+    @Override
+    public void stop() {}

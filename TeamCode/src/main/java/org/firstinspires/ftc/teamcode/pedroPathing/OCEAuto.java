@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
-
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
@@ -19,7 +17,7 @@ public class OCEAuto extends OpMode {
     
     private final Pose startPose  = new Pose(56, 8, Math.toRadians(90));
     private PathChain line1, line2, line3, line4, line5, line6, line7;
-public void buildPaths() {
+    public void buildPaths() {
 
 
         line1 = follower.pathBuilder()
@@ -83,7 +81,7 @@ public void buildPaths() {
             )
             .setConstantHeadingInterpolation(Math.toRadians(40))
             .build();
-        }
+    }
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:

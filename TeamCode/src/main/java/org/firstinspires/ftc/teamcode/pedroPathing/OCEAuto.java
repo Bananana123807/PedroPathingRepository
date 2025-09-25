@@ -1,33 +1,26 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import com.bylazar.configurables.annotations.Configurable;
+import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
+
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.PathChain;
-import com.pedropathing.util.Timer;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-@Autonomous(name = "OCEauto", group = "Autonomous's")
-public class OCE_auto extends OpMode {
+@Autonomous(name = "OCE_Auto", group = "Autonomous")
+public class OCEAuto extends OpMode {
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
     
-    private final Pose startPose  = new Pose(56, 8, Math.toRadians(90);
-    private PathChain line1, line2, line3, line4, line5, line6, line7; 
-    
+    private final Pose startPose  = new Pose(56, 8, Math.toRadians(90));
+    private PathChain line1, line2, line3, line4, line5, line6, line7;
 public void buildPaths() {
-        public static PathBuilder builder = new PathBuilder();
+
 
         line1 = follower.pathBuilder()
             .addPath(
@@ -91,8 +84,6 @@ public void buildPaths() {
             .setConstantHeadingInterpolation(Math.toRadians(40))
             .build();
         }
-    }
-    
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
@@ -176,3 +167,5 @@ public void buildPaths() {
 
     @Override
     public void stop() {}
+}
+

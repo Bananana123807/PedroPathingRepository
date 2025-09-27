@@ -17,15 +17,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(5.55)
-            .forwardZeroPowerAcceleration(-41.96283398228088)
-            .lateralZeroPowerAcceleration(-65.34704819224949)
-            .useSecondaryDrivePIDF(true)
-            .useSecondaryHeadingPIDF(true)
-            .useSecondaryDrivePIDF(true)
+            .forwardZeroPowerAcceleration(-36.99634602565779)
+            .lateralZeroPowerAcceleration(-61.44097188176266)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.05, 0, 0, 0))
-            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0, 0, 0, 0))
             .headingPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0, 0.01))
-            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(5, 0, 0.01, 0.08))
             .centripetalScaling(0.0005);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);

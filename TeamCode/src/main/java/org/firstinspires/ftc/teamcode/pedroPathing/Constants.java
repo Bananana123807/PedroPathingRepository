@@ -42,8 +42,8 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity(38.90905595508234)
-            .yVelocity(34.1788463030067);
+            .xVelocity(63.46342736694044)
+            .yVelocity(80.3967867942754);
     public static TwoWheelConstants localizerConstants = new TwoWheelConstants()
             .forwardEncoder_HardwareMapName("y-odo")
             .strafeEncoder_HardwareMapName("x-odo")
@@ -57,7 +57,7 @@ public class Constants {
             .forwardPodY(5)
             .strafePodX(4)
             .forwardTicksToInches(0.0030059)
-            .strafeTicksToInches(0.0044)
+            .strafeTicksToInches(0.052461)
             .forwardEncoderDirection(Encoder.FORWARD)
             .strafeEncoderDirection(Encoder.REVERSE);
     public static Follower createFollower(HardwareMap hardwareMap) {

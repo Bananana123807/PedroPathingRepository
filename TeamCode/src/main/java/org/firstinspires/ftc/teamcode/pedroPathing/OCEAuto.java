@@ -31,8 +31,8 @@ public class OCEAuto extends OpMode {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
-    /* Here is an example for Constant Interpolation
-    scorePreload.setConstantInterpolation(startPose.getHeading()); */
+        /* Here is an example for Constant Interpolation
+        scorePreload.setConstantInterpolation(startPose.getHeading()); */
 
         /* This is our grabPickup1 PathChain. We are using a single path with a BezierLine, which is a straight line. */
         grabPickup1 = follower.pathBuilder()
@@ -201,7 +201,4 @@ public class OCEAuto extends OpMode {
         opmodeTimer.resetTimer();
         setPathState(0);
     }
-
-    /** We do not use this because everything should automatically disable **/
-    @Override
-    public void stop() {}
+}

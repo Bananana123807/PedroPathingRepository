@@ -72,6 +72,7 @@ public class MotifAprilTag extends LinearOpMode {
     /**
      * The variable to store our instance of the AprilTag processor.
      */
+
     private AprilTagProcessor aprilTag;
 
     /**

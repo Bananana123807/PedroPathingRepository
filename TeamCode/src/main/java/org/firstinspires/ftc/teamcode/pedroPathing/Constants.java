@@ -17,10 +17,15 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(5.55)
-            .forwardZeroPowerAcceleration(-36.99634602565779)
-            .lateralZeroPowerAcceleration(-61.44097188176266)
+            .forwardZeroPowerAcceleration(-41.96283398228088)
+            .lateralZeroPowerAcceleration(-65.34704819224949)
+            .useSecondaryDrivePIDF(true)
+            .useSecondaryHeadingPIDF(true)
+            .useSecondaryDrivePIDF(true)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.05, 0, 0, 0))
+            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0, 0, 0, 0))
             .headingPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0, 0.01))
+            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(5, 0, 0.01, 0.08))
             .centripetalScaling(0.0005);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
@@ -34,8 +39,8 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity(63.46342736694044)
-            .yVelocity(80.3967867942754);
+            .xVelocity(38.90905595508234)
+            .yVelocity(34.1788463030067);
     public static TwoWheelConstants localizerConstants = new TwoWheelConstants()
             .forwardEncoder_HardwareMapName("y-odo")
             .strafeEncoder_HardwareMapName("x-odo")
@@ -49,7 +54,7 @@ public class Constants {
             .forwardPodY(5)
             .strafePodX(4)
             .forwardTicksToInches(0.0030059)
-            .strafeTicksToInches(0.052461)
+            .strafeTicksToInches(0.0044)
             .forwardEncoderDirection(Encoder.FORWARD)
             .strafeEncoderDirection(Encoder.REVERSE);
     public static Follower createFollower(HardwareMap hardwareMap) {

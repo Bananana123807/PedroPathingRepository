@@ -18,8 +18,7 @@ public class testing_auto extends OpMode {
     private int pathState;
 
     private final Pose startPose = new Pose(0, 0, Math.toRadians(90)); // Start Pose of our robot.
-    private final Pose scorePose = new Pose(0, 24, Math.toRadians(90));
-
+    private final Pose scorePose = new Pose(0   , 24, Math.toRadians(90));
     private final Pose secondPose = new Pose(24, 24, Math.toRadians(90));
     // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
     private Path scorePreload;
@@ -28,15 +27,12 @@ public class testing_auto extends OpMode {
     public void buildPaths() {
         /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
         scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
-
-
+        scorePreload.setConstantHeadingInterpolation(scorePose.getHeading());
 
         secondRun = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, secondPose))
-                .setLinearHeadingInterpolation(scorePose.getHeading(), secondPose.getHeading())
+                .setConstantHeadingInterpolation(scorePose.getHeading())
                 .build();
-
     }
 
     public void setPathState(int pState) {

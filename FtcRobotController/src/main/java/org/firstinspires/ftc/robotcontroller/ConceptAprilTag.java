@@ -27,10 +27,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.robotcontroller;
 
-import android.util.Size;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -80,6 +78,10 @@ public class ConceptAprilTag extends LinearOpMode {
      * The variable to store our instance of the vision portal.
      */
     private VisionPortal visionPortal;
+
+    private String color1 = "none";
+    private String color2 = "none";
+    private String color3 = "none";
 
     @Override
     public void runOpMode() {
@@ -193,8 +195,35 @@ public class ConceptAprilTag extends LinearOpMode {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addData("# AprilTags Detected", currentDetections.size());
 
-        // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
+            // Assign color pattern based on tag ID
+            switch (detection.id) {
+                case 21:
+                    color1 = "green";
+                    color2 = "purple";
+                    color3 = "purple";
+                    break;
+
+                case 22:
+                    color1 = "purple";
+                    color2 = "green";
+                    color3 = "purple";
+                    break;
+
+                case 23:
+                    color1 = "purple";
+                    color2 = "purple";
+                    color3 = "green";
+                    break;
+
+                default:
+                    color1 = "unknown";
+                    color2 = "unknown";
+                    color3 = "unknown";
+                    break;
+            }
+
+            // Show tag info
             if (detection.metadata != null) {
                 telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
@@ -204,13 +233,17 @@ public class ConceptAprilTag extends LinearOpMode {
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
-        }   // end for() loop
+        }
 
-        // Add "key" information to telemetry
+        // Display the color variables
+        telemetry.addData("First Color", color1);
+        telemetry.addData("Second Color", color2);
+        telemetry.addData("Third Color", color3);
+
         telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
         telemetry.addLine("RBE = Range, Bearing & Elevation");
-
-    }   // end method telemetryAprilTag()
+    }
+// end method telemetryAprilTag()
 
 }   // end class

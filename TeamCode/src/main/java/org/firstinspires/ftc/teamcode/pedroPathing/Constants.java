@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-//commit comment
-
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.control.FilteredPIDFCoefficients;
 import com.pedropathing.control.PIDFCoefficients;
@@ -15,7 +13,6 @@ import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
 @Configurable
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()

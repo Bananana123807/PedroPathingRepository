@@ -114,12 +114,20 @@ public class OCEAuto extends OpMode {
                 setPathState(3);
                 break;
             case 3:
-                follower.followPath(grabPickup3);
+                follower.followPath(grabPickup2);
                 setPathState(4);
                 break;
             case 4:
-                follower.followPath(scorePickup3);
+                follower.followPath(scorePickup2);
                 setPathState(5);
+                break;
+            case 5:
+                follower.followPath(grabPickup3);
+                setPathState(6);
+                break;
+            case 6:
+                follower.followPath(scorePickup3);
+                setPathState(7);
                 break;
         }
     }

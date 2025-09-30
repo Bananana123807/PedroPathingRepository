@@ -83,6 +83,7 @@ public class MotifAprilTag extends LinearOpMode {
     private String color1 = "none";
     private String color2 = "none";
     private String color3 = "none";
+    private String obelisk = "none";
 
     @Override
     public void runOpMode() {
@@ -199,25 +200,37 @@ public class MotifAprilTag extends LinearOpMode {
         for (AprilTagDetection detection : currentDetections) {
             // Assign color pattern based on tag ID
             switch (detection.id) {
+                case 20:
+                    obelisk = "Blue";
+                    break;
+
                 case 21:
                     color1 = "green";
                     color2 = "purple";
                     color3 = "purple";
+                    obelisk = "Communism Was Kinda Tight";
                     break;
 
                 case 22:
                     color1 = "purple";
                     color2 = "green";
                     color3 = "purple";
+                    obelisk = "Communism Was Kinda Tight";
                     break;
 
                 case 23:
                     color1 = "purple";
                     color2 = "purple";
                     color3 = "green";
+                    obelisk = "Communism Was Kinda Tight";
+                    break;
+
+                case 24:
+                    obelisk = "Red";
                     break;
 
                 default:
+                    obelisk = "Communism Was Kinda Tight";
                     color1 = "unknown";
                     color2 = "unknown";
                     color3 = "unknown";
@@ -237,13 +250,16 @@ public class MotifAprilTag extends LinearOpMode {
         }
 
         // Display the color variables
-        telemetry.addData("First Color", color1);
-        telemetry.addData("Second Color", color2);
-        telemetry.addData("Third Color", color3);
 
         telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
         telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
         telemetry.addLine("RBE = Range, Bearing & Elevation");
+
+        telemetry.addData("First Color", color1);
+        telemetry.addData("Second Color", color2);
+        telemetry.addData("Third Color", color3);
+
+        telemetry.addData("Obelisk Color:", obelisk);
     }
 // end method telemetryAprilTag()
 

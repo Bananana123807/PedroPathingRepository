@@ -27,7 +27,7 @@ import java.util.List;
 @Autonomous(name = "Concept: AprilTag", group = "Concept")
 public class OCERedSideAprilTagAuto extends OpMode {
     private double shooterPower = 0.0;
-
+    private AprilTagDetection lastDetection = null;
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
@@ -113,8 +113,11 @@ public class OCERedSideAprilTagAuto extends OpMode {
 
     private void telemetryAprilTag() {
 
-
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        if (!currentDetections.isEmpty()) {
+            lastDetection = currentDetections.get(0); // Save the first detection
+        }
+
         telemetry.addData("# AprilTags Detected", currentDetections.size());
 
 
@@ -165,34 +168,6 @@ public class OCERedSideAprilTagAuto extends OpMode {
             } else {
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
-            }
-
-
-
-            if (!powerSet) {
-                double xMeters = detection.ftcPose.x * 0.0254;
-                double yMeters = detection.ftcPose.y * 0.0254;
-                double distanceMeters = Math.sqrt(xMeters * xMeters + yMeters * yMeters);
-                double launchAngleDeg = 31.680513712215;
-                double shooterHeight = 11 * 0.0254;
-                double targetHeight = 45 * 0.0254;
-                double wheelRadius = 0.092075;
-                double gearRatio = 1.0;
-                double fudgeFactor = 0;
-
-
-                shooterPower = ShooterCalculator.getShooterMotorPower(
-                        distanceMeters,
-                        launchAngleDeg,
-                        shooterHeight,
-                        targetHeight,
-                        wheelRadius,
-                        gearRatio,
-                        fudgeFactor
-                );
-
-
-                powerSet = true;
             }
         }
 
@@ -304,39 +279,117 @@ public class OCERedSideAprilTagAuto extends OpMode {
         pathState = pState;
         pathTimer.resetTimer();
     }
+
     public void autonomousPathUpdate() {
+
+        if (lastDetection == null) {
+            telemetry.addLine("No AprilTag detected yet; skipping shooter calc");
+            return;
+        }
+
+        double xMeters = lastDetection.ftcPose.x * 0.0254;
+        double yMeters = lastDetection.ftcPose.y * 0.0254;
+        double distanceMeters = Math.sqrt(xMeters * xMeters + yMeters * yMeters);
+        double launchAngleDeg = 31.680513712215;
+        double shooterHeight = 11 * 0.0254;
+        double targetHeight = 45 * 0.0254;
+        double wheelRadius = 0.092075;
+        double gearRatio = 1.0;
+        double fudgeFactor = 1.0;
+
         switch (pathState) {
             case 0:
-                follower.followPath(scorePreload);
-                setPathState(1);
-                shooterMotor.setPower(shooterPower);
+                if (!follower.isBusy()) {
+                    shooterPower = ShooterCalculator.getShooterMotorPower(
+                            distanceMeters,
+                            launchAngleDeg,
+                            shooterHeight,
+                            targetHeight,
+                            wheelRadius,
+                            gearRatio,
+                            fudgeFactor
+                    );
+                    shooterMotor.setPower(-shooterPower);
+                    follower.followPath(scorePreload);
+                } else if (!follower.isBusy()) { // finished
+                    setPathState(1);
+                }
                 break;
+
             case 1:
-                follower.followPath(grabPickup1);
-                setPathState(2);
+                if (!follower.isBusy()) {
+                    follower.followPath(grabPickup1);
+                    setPathState(2);
+                }
                 break;
+
             case 2:
-                follower.followPath(scorePickup1);
-                setPathState(3);
-                shooterMotor.setPower(shooterPower);
+                if (!follower.isBusy()) {
+                    shooterPower = ShooterCalculator.getShooterMotorPower(
+                            distanceMeters,
+                            launchAngleDeg,
+                            shooterHeight,
+                            targetHeight,
+                            wheelRadius,
+                            gearRatio,
+                            fudgeFactor
+                    );
+                    shooterMotor.setPower(-shooterPower);
+                    follower.followPath(scorePickup1);
+                    setPathState(3);
+                }
                 break;
+
             case 3:
-                follower.followPath(grabPickup2);
-                setPathState(4);
+                if (!follower.isBusy()) {
+                    follower.followPath(grabPickup2);
+                    setPathState(4);
+                }
                 break;
+
             case 4:
-                follower.followPath(scorePickup2);
-                setPathState(5);
-                shooterMotor.setPower(shooterPower);
+                if (!follower.isBusy()) {
+                    shooterPower = ShooterCalculator.getShooterMotorPower(
+                            distanceMeters,
+                            launchAngleDeg,
+                            shooterHeight,
+                            targetHeight,
+                            wheelRadius,
+                            gearRatio,
+                            fudgeFactor
+                    );
+                    shooterMotor.setPower(-shooterPower);
+                    follower.followPath(scorePickup2);
+                    setPathState(5);
+                }
                 break;
+
             case 5:
-                follower.followPath(grabPickup3);
-                setPathState(6);
+                if (!follower.isBusy()) {
+                    follower.followPath(grabPickup3);
+                    setPathState(6);
+                }
                 break;
+
             case 6:
-                follower.followPath(scorePickup3);
-                setPathState(7);
-                shooterMotor.setPower(shooterPower);
+                if (!follower.isBusy()) {
+                    shooterPower = ShooterCalculator.getShooterMotorPower(
+                            distanceMeters,
+                            launchAngleDeg,
+                            shooterHeight,
+                            targetHeight,
+                            wheelRadius,
+                            gearRatio,
+                            fudgeFactor
+                    );
+                    shooterMotor.setPower(-shooterPower);
+                    follower.followPath(scorePickup3);
+                    setPathState(7);
+                }
+                break;
+
+            default:
+                telemetry.addLine("Autonomous complete!");
                 break;
         }
     }
@@ -345,9 +398,7 @@ public class OCERedSideAprilTagAuto extends OpMode {
     @Override
     public void loop() {
 
-
-
-        // These loop the movements of the robot, these must be called continuously in order to work
+        telemetryAprilTag();      // update lastDetection each loop
         follower.update();
         autonomousPathUpdate();
 
@@ -367,8 +418,9 @@ public class OCERedSideAprilTagAuto extends OpMode {
     /** This method is called once at the init of the OpMode. **/
     @Override
     public void init(){
-        shooterMotor = hardwareMap.get(DcMotor.class, "shooterMotor");
 
+        setPathState(0);
+        shooterMotor = hardwareMap.get(DcMotor.class, "shooterMotor");
 
         pathTimer = new Timer();
         opmodeTimer = new Timer();
@@ -384,7 +436,6 @@ public class OCERedSideAprilTagAuto extends OpMode {
 
         initAprilTag();
 
-
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
         telemetry.addData(">", "Touch START to start OpMode");
         telemetry.update();
@@ -399,6 +450,3 @@ public class OCERedSideAprilTagAuto extends OpMode {
 
     }
 }
-
-
-

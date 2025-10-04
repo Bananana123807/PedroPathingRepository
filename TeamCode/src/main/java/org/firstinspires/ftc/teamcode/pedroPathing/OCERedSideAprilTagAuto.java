@@ -341,7 +341,6 @@ public class OCERedSideAprilTagAuto extends OpMode {
                 break;
 
             case 3:
-                // Grab pickup 2
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2);
                     setPathState(4);
@@ -349,7 +348,6 @@ public class OCERedSideAprilTagAuto extends OpMode {
                 break;
 
             case 4:
-                // Score pickup 2
                 if (!follower.isBusy()) {
                     shooterPower = ShooterCalculator.getShooterMotorPower(
                             distanceMeters,

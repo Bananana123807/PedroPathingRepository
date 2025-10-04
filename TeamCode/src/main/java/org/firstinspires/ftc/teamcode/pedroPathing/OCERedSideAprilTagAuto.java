@@ -298,6 +298,7 @@ public class OCERedSideAprilTagAuto extends OpMode {
         double fudgeFactor = 1.0;
 
         switch (pathState) {
+
             case 0:
                 if (!follower.isBusy()) {
                     shooterPower = ShooterCalculator.getShooterMotorPower(
@@ -311,7 +312,6 @@ public class OCERedSideAprilTagAuto extends OpMode {
                     );
                     shooterMotor.setPower(-shooterPower);
                     follower.followPath(scorePreload);
-                } else if (!follower.isBusy()) { // finished
                     setPathState(1);
                 }
                 break;
@@ -341,6 +341,7 @@ public class OCERedSideAprilTagAuto extends OpMode {
                 break;
 
             case 3:
+                // Grab pickup 2
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup2);
                     setPathState(4);
@@ -348,6 +349,7 @@ public class OCERedSideAprilTagAuto extends OpMode {
                 break;
 
             case 4:
+                // Score pickup 2
                 if (!follower.isBusy()) {
                     shooterPower = ShooterCalculator.getShooterMotorPower(
                             distanceMeters,
@@ -365,6 +367,7 @@ public class OCERedSideAprilTagAuto extends OpMode {
                 break;
 
             case 5:
+                // Grab pickup 3
                 if (!follower.isBusy()) {
                     follower.followPath(grabPickup3);
                     setPathState(6);
@@ -372,6 +375,7 @@ public class OCERedSideAprilTagAuto extends OpMode {
                 break;
 
             case 6:
+                // Score pickup 3
                 if (!follower.isBusy()) {
                     shooterPower = ShooterCalculator.getShooterMotorPower(
                             distanceMeters,
@@ -389,10 +393,11 @@ public class OCERedSideAprilTagAuto extends OpMode {
                 break;
 
             default:
-                telemetry.addLine("Autonomous complete!");
+                telemetry.addLine("Auto Done");
                 break;
         }
     }
+
 
 
     @Override

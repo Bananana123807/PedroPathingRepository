@@ -16,17 +16,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Configurable
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(5.55)
-            .forwardZeroPowerAcceleration(-41.96283398228088)
-            .lateralZeroPowerAcceleration(-65.34704819224949)
-            .useSecondaryDrivePIDF(true)
-            .useSecondaryHeadingPIDF(true)
-            .useSecondaryDrivePIDF(true)
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.05, 0, 0, 0))
-            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0, 0, 0, 0))
-            .headingPIDFCoefficients(new PIDFCoefficients(0.8, 0, 0, 0.01))
-            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(5, 0, 0.01, 0.08))
-            .centripetalScaling(0.0005);
+            .mass(8.25);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -38,9 +28,7 @@ public class Constants {
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity(38.90905595508234)
-            .yVelocity(34.1788463030067);
+            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
     public static TwoWheelConstants localizerConstants = new TwoWheelConstants()
             .forwardEncoder_HardwareMapName("y-odo")
             .strafeEncoder_HardwareMapName("x-odo")
@@ -48,13 +36,11 @@ public class Constants {
             .IMU_Orientation(
                     new RevHubOrientationOnRobot(
                             RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                            RevHubOrientationOnRobot.UsbFacingDirection.RIGHT
+                            RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
                     )
             )
-            .forwardPodY(5)
-            .strafePodX(4)
-            .forwardTicksToInches(0.0030059)
-            .strafeTicksToInches(0.0044)
+            .forwardPodY(6.25)
+            .strafePodX(1.75)
             .forwardEncoderDirection(Encoder.FORWARD)
             .strafeEncoderDirection(Encoder.REVERSE);
     public static Follower createFollower(HardwareMap hardwareMap) {

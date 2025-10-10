@@ -449,3 +449,100 @@
 //
 //    }
 //}
+package org.firstinspires.ftc.teamcode.pedroPathing;
+
+import android.annotation.SuppressLint;
+
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
+import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+
+
+import java.util.List;
+
+
+@Autonomous(name = "bob", group = "Concept")
+public class testpedro extends OpMode {
+    private double shooterPower = -1;
+    private double gatePower = -1;
+    private AprilTagDetection lastDetection = null;
+    private Timer pathTimer;
+    //cat11red!
+
+    private DcMotor shooterMotor = null;
+    private CRServo gate = null;
+    private Follower follower;
+    private int pathState;
+    private final Pose startPose = new Pose(0, 0, Math.toRadians(0));
+    private final Pose scorePose = new Pose(0,10, Math.toRadians(0));
+    private Path scorePreload;
+    public void buildPaths() {
+        scorePreload = new Path(new BezierLine(startPose, scorePose));
+        scorePreload.setConstantHeadingInterpolation(0);
+    }
+
+
+    public void setPathState(int pState) {
+        pathState = pState;
+        pathTimer.resetTimer();
+    }
+
+    public void autonomousPathUpdate() {
+        if (pathState == 0) {
+            shooterMotor.setPower(shooterPower);
+            gate.setPower(gatePower);
+            follower.followPath(scorePreload);
+        }
+    }
+
+
+
+    @Override
+    public void loop() {
+        follower.update();
+        autonomousPathUpdate();
+
+        telemetry.addData("path state", pathState);
+        telemetry.addData("x", follower.getPose().getX());
+        telemetry.addData("y", follower.getPose().getY());
+        telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.addData("Shooter Power", shooterPower);
+        telemetry.update();
+
+
+    }
+
+
+    /** This method is called once at the init of the OpMode. **/
+    @Override
+    public void init(){
+
+        shooterMotor = hardwareMap.get(DcMotor.class, "shooterMotor");
+        gate = hardwareMap.get(CRServo.class, "gate");
+
+        pathTimer = new Timer();
+        pathTimer.resetTimer();
+
+        setPathState(0);
+
+        follower = Constants.createFollower(hardwareMap);
+        follower.setStartingPose(startPose);
+        buildPaths();
+
+
+        telemetry.update();
+    }
+}

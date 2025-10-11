@@ -16,9 +16,13 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Configurable
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(8.25);
-
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+            .mass(8.25)
+            .forwardZeroPowerAcceleration(-33.83770490164275)
+            .lateralZeroPowerAcceleration(-60.632029174232976)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.02, 0.01))
+            .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.01, 0.03))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.01, 0, 0.001, 0.6, 0.00001));
+   public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
             .rightFrontMotorName("rightFront")
@@ -28,7 +32,9 @@ public class Constants {
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
+            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .xVelocity(60.101541167104244)
+            .yVelocity(51.14004993104806);
     public static TwoWheelConstants localizerConstants = new TwoWheelConstants()
             .forwardEncoder_HardwareMapName("y-odo")
             .strafeEncoder_HardwareMapName("x-odo")
@@ -39,10 +45,12 @@ public class Constants {
                             RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
                     )
             )
-            .forwardPodY(6.25)
-            .strafePodX(1.75)
+            .forwardPodY(6)
+            .strafePodX(2.5)
             .forwardEncoderDirection(Encoder.FORWARD)
-            .strafeEncoderDirection(Encoder.REVERSE);
+            .strafeEncoderDirection(Encoder.REVERSE)
+            .forwardTicksToInches(0.0029449588)
+            .strafeTicksToInches(0.002943858);
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)

@@ -1,13 +1,15 @@
 /**
  * Top-level build file for ftc_app project.
  *
- * It is extraordinarily rare that you will ever need to edit this file.
+ * You almost never need to edit this file, but this version includes
+ * JitPack for modern FTC libraries (e.g., PedroPathing).
  */
 
 buildscript {
     repositories {
-        mavenCentral()
         google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         // Note for FTC Teams: Do not modify this yourself.
@@ -15,15 +17,14 @@ buildscript {
     }
 }
 
-// This is now required because aapt2 has to be downloaded from the
-// google() repository beginning with version 3.2 of the Android Gradle Plugin
+// This ensures all modules (FtcRobotController, TeamCode, etc.) can use the same repositories.
 allprojects {
     repositories {
-        mavenCentral()
         google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 }
 
-repositories {
-    mavenCentral()
-}
+// No standalone "repositories" block is needed here.
+// It caused duplicate or incomplete repository definitions before.

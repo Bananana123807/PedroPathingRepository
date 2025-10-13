@@ -13,6 +13,7 @@ import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+
 @Configurable
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
@@ -22,7 +23,9 @@ public class Constants {
             .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.02, 0.01))
             .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.01, 0.03))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.01, 0, 0.001, 0.6, 0.00001));
-   public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
             .rightFrontMotorName("rightFront")
@@ -35,6 +38,7 @@ public class Constants {
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             .xVelocity(60.101541167104244)
             .yVelocity(51.14004993104806);
+
     public static TwoWheelConstants localizerConstants = new TwoWheelConstants()
             .forwardEncoder_HardwareMapName("y-odo")
             .strafeEncoder_HardwareMapName("x-odo")
@@ -51,6 +55,7 @@ public class Constants {
             .strafeEncoderDirection(Encoder.REVERSE)
             .forwardTicksToInches(0.0029449588)
             .strafeTicksToInches(0.002943858);
+
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)

@@ -106,6 +106,7 @@ public class testing_auto extends OpMode {
     }
 
 
+
     @Override
     public void init(){
 

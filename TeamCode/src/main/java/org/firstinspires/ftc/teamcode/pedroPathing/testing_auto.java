@@ -16,21 +16,28 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "ScorePreload", group = "Over-caffeinated")
 public class testing_auto extends OpMode {
-    private double shooterPower = -1;
+    private double shooterPower = -0.7;
     private double gatePower = -1;
     private Follower follower;
     private Timer pathTimer;
     private DcMotor shooterMotor = null;
     private CRServo gate = null;
     private int pathState;
-    private double waitTime = 1000;
-    private boolean waiting = false;
+    private int counter = -1;
     private final Pose startPose = new Pose(0, 0);
     private final Pose scorePose = new Pose(-60, 0);
+    private final Pose moveOutPose = new Pose(-60, -15);
     private Path scorePreload;
+    private PathChain moveOut;
+    private double waitTime = 2000;
     public void buildPaths() {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setConstantHeadingInterpolation(Math.toRadians(0));
+
+        moveOut = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose, moveOutPose))
+                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .build();
     }
 
     public void setPathState(int pState) {
@@ -40,21 +47,37 @@ public class testing_auto extends OpMode {
     public void autonomousPathUpdate(){
         switch (pathState) {
             case 0:
+                shooterMotor.setPower(shooterPower);
                 follower.followPath(scorePreload);
-                setPathState(1);
-                pathTimer.resetTimer();
                 telemetry.addLine("Moving Back");
+                waitTime = 2000;
                 break;
             case 1:
-                shooterMotor.setPower(shooterPower);
                 gate.setPower(gatePower);
-//                if (pathTimer.getElapsedTimeSeconds() >= 1){
-//                    telemetry.addLine("Shooting");
-//
-//                } else {
-//                    telemetry.addLine("Waiting");
-//                    setPathState(1);
-//                }
+                waitTime = 1500;
+                break;
+            case 2:
+                gate.setPower(1);
+                waitTime = 2000;
+                break;
+            case 3:
+                gate.setPower(gatePower);
+                waitTime = 750;
+                break;
+            case 4:
+                gate.setPower(1);
+                waitTime = 2000;
+                break;
+            case 5:
+                gate.setPower(gatePower);
+                waitTime = 1000;
+                break;
+            case 6:
+                gate.setPower(0);
+                break;
+            case 7:
+                follower.followPath(moveOut);
+                telemetry.addLine("Moving Out");
                 break;
         }
     }
@@ -62,7 +85,15 @@ public class testing_auto extends OpMode {
     @Override
     public void loop() {
         follower.update();
-        autonomousPathUpdate();
+
+        double elapsedTime = pathTimer.getElapsedTime();
+
+        if (elapsedTime >= waitTime) {
+            counter += 1;
+            setPathState(counter);
+            autonomousPathUpdate();
+        }
+
 
         telemetry.addData("path state", pathState);
         telemetry.addData("x", follower.getPose().getX());
@@ -75,7 +106,6 @@ public class testing_auto extends OpMode {
     }
 
 
-    /** This method is called once at the init of the OpMode. **/
     @Override
     public void init(){
 

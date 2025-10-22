@@ -14,8 +14,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@Autonomous(name = "ScorePreload", group = "Over-caffeinated")
-public class testing_auto extends OpMode {
+@Autonomous(name = "RedSideAutoClose", group = "Over-caffeinated")
+public class RedSideAutoClose extends OpMode {
     private double shooterPower = -0.7;
     private double gatePower = -1;
     private Follower follower;
@@ -25,8 +25,8 @@ public class testing_auto extends OpMode {
     private int pathState;
     private int counter = -1;
     private final Pose startPose = new Pose(0, 0);
-    private final Pose scorePose = new Pose(-60, 0);
-    private final Pose moveOutPose = new Pose(-60, -15);
+    private final Pose scorePose = new Pose(-30, 0);
+    private final Pose moveOutPose = new Pose(-30, -15);
     private Path scorePreload;
     private PathChain moveOut;
     private double waitTime = 2000;

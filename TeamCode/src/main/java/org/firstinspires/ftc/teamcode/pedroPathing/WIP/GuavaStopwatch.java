@@ -1,11 +1,13 @@
-package org.firstinspires.ftc.teamcode.pedroPathing;
+package org.firstinspires.ftc.teamcode.pedroPathing.WIP;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.base.Stopwatch;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+@Disabled
 @Autonomous(name = "GuavaTest", group = "Over-caffeinated")
 public class GuavaStopwatch extends OpMode {
     //This is an example. When we get TeleOp on here, you can add this.

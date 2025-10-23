@@ -1,7 +1,4 @@
-package org.firstinspires.ftc.teamcode.pedroPathing;
-
-import static java.lang.Thread.currentThread;
-import static java.lang.Thread.sleep;
+package org.firstinspires.ftc.teamcode.pedroPathing.WIP;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
@@ -15,7 +12,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "RedSideAutoClose", group = "Over-caffeinated")
-public class RedSideAutoFar extends OpMode {
+public class RedSideAutoClose extends OpMode {
     private double shooterPower = -0.7;
     private double gatePower = -1;
     private Follower follower;
@@ -25,8 +22,8 @@ public class RedSideAutoFar extends OpMode {
     private int pathState;
     private int counter = -1;
     private final Pose startPose = new Pose(0, 0);
-    private final Pose scorePose = new Pose(-60, 0);
-    private final Pose moveOutPose = new Pose(-60, -15);
+    private final Pose scorePose = new Pose(-30, 0);
+    private final Pose moveOutPose = new Pose(-30, -15);
     private Path scorePreload;
     private PathChain moveOut;
     private double waitTime = 2000;
@@ -106,7 +103,7 @@ public class RedSideAutoFar extends OpMode {
     }
 
 
-    /** This method is called once at the init of the OpMode. **/
+
     @Override
     public void init(){
 

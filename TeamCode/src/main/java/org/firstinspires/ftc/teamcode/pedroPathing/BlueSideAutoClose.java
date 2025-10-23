@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 
 import com.pedropathing.follower.Follower;
@@ -13,6 +12,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+
+import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
 
 @Autonomous(name = "BlueSideAutoClose", group = "Over-caffeinated")
 public class BlueSideAutoClose extends OpMode {

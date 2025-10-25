@@ -13,11 +13,14 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import java.util.List;
 
+@Disabled
 @Autonomous(name = "Concept: AprilTag", group = "Concept")
 public class OCERedSideAprilTagAuto extends OpMode {
     private double shooterPower = 0.0;

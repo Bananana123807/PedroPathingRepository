@@ -59,6 +59,7 @@ public class PewPewTeleop extends OpMode {
 
         // Read initial heading and store offset
         headingOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        headingOffset = headingOffset + (Math.PI)/2;
     }
 
     @Override
@@ -70,7 +71,7 @@ public class PewPewTeleop extends OpMode {
 
         // Read raw IMU heading and adjust with offset
         double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-        double botHeading = rawHeading - headingOffset;
+        double botHeading = headingOffset - rawHeading;
         botHeading = normalizeRadians(botHeading);
 
         // Field-centric transform
@@ -111,6 +112,10 @@ public class PewPewTeleop extends OpMode {
             shooterMotor.setPower(0);
         }
 
+        if (gamepad1.dpad_up) {
+            imu.resetYaw();
+            headingOffset = 0;
+        }
         // Telemetry
         telemetry.addData("Raw Heading (deg)", Math.toDegrees(rawHeading));
         telemetry.addData("Heading Offset (deg)", Math.toDegrees(headingOffset));

@@ -9,6 +9,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -18,33 +19,48 @@ import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
 @Autonomous(name = "RedSideCloseAuto", group = "Over-caffeinated")
 public class RedSideCloseAuto extends OpMode {
 
+    private Path turnToClassifier;
+
+
     private double shooterPower = -0.55;
     private double gatePower = -1;
     private Follower follower;
     private Timer pathTimer;
-    private DcMotor shooterMotor = null;
+    private DcMotorEx shooterMotor = null;
     private CRServo gate = null;
     private IMU imu = null;
 
     private int pathState;
-    private int counter = -1;
+    private final int TICKS_PER_REV = 28;
 
-    private double imuHeadingOffset = 0;
+    private double TARGET_RPM = 2900;
+    private double currentRPM = 0;
+
+    private double kP = 0.005;
+    private double kI = 0.00008;
+    private double kD = 0;
+
+    private double previousError = 0;
+    private double integral = 0;
+    private int counter = -1;
+    private double output = 0;
 
     private Pose startPose;
-    private final Pose scorePose = new Pose(0, 30);
-    private final Pose moveOutPose = new Pose(0, -15);
-    private Path scorePreload;
+    private Pose backwardPose;
+    private Pose exitPose;
+
+    private Path moveBackward;
     private PathChain moveOut;
+
     private double waitTime = 2000;
 
     public void buildPaths() {
-        scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-40));
+        moveBackward = new Path(new BezierLine(startPose, backwardPose));
+        moveBackward.setLinearHeadingInterpolation(startPose.getHeading(), backwardPose.getHeading());
 
         moveOut = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, moveOutPose))
-                .setConstantHeadingInterpolation(Math.toRadians(-40))
+                .addPath(new BezierLine(backwardPose, exitPose))
+                .setConstantHeadingInterpolation(backwardPose.getHeading())
                 .build();
     }
 
@@ -55,48 +71,75 @@ public class RedSideCloseAuto extends OpMode {
 
     public void autonomousPathUpdate() {
         switch (pathState) {
-            case 0:
-                shooterMotor.setPower(shooterPower);
-                follower.followPath(scorePreload);
-                telemetry.addLine("Moving Back");
+            case 0: // Move backward
+                follower.followPath(moveBackward);
+                telemetry.addLine("Backing up");
                 waitTime = 2000;
                 break;
-            case 1:
-                gate.setPower(gatePower);
+            case 1: // Gate reverse spin before shot 1
+                gate.setPower(1);
                 waitTime = 1500;
                 break;
-            case 2:
-                gate.setPower(1);
-                waitTime = 2000;
-                break;
-            case 3:
+            case 2: // Shoot ball 1
+                shooterMotor.setPower(output);
                 gate.setPower(gatePower);
-                waitTime = 750;
+                waitTime = 500;
                 break;
-            case 4:
+            case 3: // Gate reverse spin before shot 2
                 gate.setPower(1);
-                waitTime = 2000;
+                waitTime = 1500;
                 break;
-            case 5:
+            case 4: // Shoot ball 2
                 gate.setPower(gatePower);
-                waitTime = 1000;
+                waitTime = 500;
                 break;
-            case 6:
+            case 5: // Gate reverse spin before shot 3
+                gate.setPower(1);
+                waitTime = 1500;
+                break;
+            case 6: // Shoot ball 3
+                gate.setPower(gatePower);
+                waitTime = 500;
+                break;
+            case 7: // Stop shooter
                 gate.setPower(0);
-                shooterMotor.setPower(0);
+                TARGET_RPM = 200;
+                waitTime = 500;
                 break;
-            case 7:
+            case 8: // Strafe left to exit
                 follower.followPath(moveOut);
-                telemetry.addLine("Moving Out");
+                telemetry.addLine("Exiting Zone");
+                waitTime = 2000;
                 break;
+
+
         }
     }
 
     @Override
     public void loop() {
+
+        if (pathState == 9 && turnToClassifier != null) {
+            follower.followPath(turnToClassifier);
+        }
+
+
+        double targetTicksPerSec = (TARGET_RPM / 60.0) * TICKS_PER_REV;
+        double currentTicksPerSec = shooterMotor.getVelocity();
+        currentRPM = (currentTicksPerSec / TICKS_PER_REV) * 60.0;
+
+        double error = targetTicksPerSec - currentTicksPerSec;
+        integral += error * 0.05;
+        double derivative = (error - previousError) / 0.05;
+
+        output = (kP * error) + (kI * integral) + (kD * derivative);
+        output = Math.max(0, Math.min(1, output));
+        previousError = error;
+
         follower.update();
 
         double elapsedTime = pathTimer.getElapsedTime();
+        shooterMotor.setPower(output);
 
         if (elapsedTime >= waitTime) {
             counter += 1;
@@ -109,37 +152,48 @@ public class RedSideCloseAuto extends OpMode {
         telemetry.addData("y", follower.getPose().getY());
         telemetry.addData("heading (rad)", follower.getPose().getHeading());
         telemetry.addData("Shooter Power", shooterMotor.getPower());
+        telemetry.addData("Shooter RPM", "%.1f", currentRPM);
+        telemetry.addData("Target RPM", "%.1f", TARGET_RPM);
+        telemetry.addData("Shooter TPS", "%.1f", currentTicksPerSec);
+        telemetry.addData("Output (PID)", "%.3f", output);
         telemetry.update();
     }
 
     @Override
     public void init() {
-        shooterMotor = hardwareMap.get(DcMotor.class, "shooterMotor");
+        shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
         gate = hardwareMap.get(CRServo.class, "gate");
         imu = hardwareMap.get(IMU.class, "imu");
 
-        // Initialize IMU with orientation parameters (adjust if your REV Hub is mounted differently)
         IMU.Parameters parameters = new IMU.Parameters(
                 new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
+                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
                         RevHubOrientationOnRobot.UsbFacingDirection.UP
                 )
         );
         imu.initialize(parameters);
 
-        // Small delay to allow IMU to stabilize and produce accurate heading
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        // Read initial IMU heading in radians (yaw)
-        imuHeadingOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-        telemetry.addData("IMU Initial Heading (rad)", imuHeadingOffset);
+        double imuHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        telemetry.addData("IMU Initial Heading (rad)", imuHeading);
 
-        // Set start pose with heading zeroed by subtracting initial IMU heading offset
-        startPose = new Pose(0, 0, -imuHeadingOffset);
+        startPose = new Pose(0, 0, imuHeading);
+
+        // Move backward 15 cm along heading
+        double backX = -20 * Math.cos(imuHeading);
+        double backY = -20 * Math.sin(imuHeading);
+        backwardPose = new Pose(backX, backY, imuHeading);
+
+        // Strafe left ~22.5 cm from backwardPose
+        double strafeDistance = 15;
+        double strafeX = backwardPose.getX() + strafeDistance * Math.cos(imuHeading - Math.PI / 2);
+        double strafeY = backwardPose.getY() + strafeDistance * Math.sin(imuHeading - Math.PI / 2);
+        exitPose = new Pose(strafeX, strafeY, imuHeading);
 
         pathTimer = new Timer();
         pathTimer.resetTimer();
@@ -148,8 +202,12 @@ public class RedSideCloseAuto extends OpMode {
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
-
         buildPaths();
+
+        shooterMotor.setDirection(DcMotorEx.Direction.REVERSE);
+        shooterMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         telemetry.update();
     }

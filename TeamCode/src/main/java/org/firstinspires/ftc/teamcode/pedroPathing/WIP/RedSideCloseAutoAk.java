@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.pedroPathing;
+package org.firstinspires.ftc.teamcode.pedroPathing.WIP;
 
 import static java.lang.Thread.sleep;
 
@@ -9,15 +9,15 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
-
-@Autonomous(name = "BlueSideAutoClose", group = "Over-caffeinated")
-public class BlueSideAutoClose extends OpMode {
-    private double shooterPower = -0.7;
+@Disabled
+@Autonomous(name = "RedSideCloseAutoAk", group = "Over-caffeinated")
+public class RedSideCloseAutoAk extends OpMode {
+    private double shooterPower = -0.55;
     private double gatePower = -1;
     private Follower follower;
     private Timer pathTimer;
@@ -26,8 +26,9 @@ public class BlueSideAutoClose extends OpMode {
     private int pathState;
     private int counter = -1;
     private final Pose startPose = new Pose(0, 0);
-    private final Pose scorePose = new Pose(-60, 0);
-    private final Pose moveOutPose = new Pose(-60, 15);
+    private final Pose scorePose = new Pose(-30, 0);
+    private final Pose moveOutPose = new Pose(-30, -15);
+    private final Pose fixPosition = new Pose(-30, -15);
     private Path scorePreload;
     private PathChain moveOut;
     private double waitTime = 2000;
@@ -126,4 +127,5 @@ public class BlueSideAutoClose extends OpMode {
 
         telemetry.update();
     }
+
 }

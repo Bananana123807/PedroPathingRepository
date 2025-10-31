@@ -15,10 +15,13 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
+import org.opencv.core.Mat;
 
-@Autonomous(name = "RedSideCloseAuto", group = "Over-caffeinated")
-public class RedSideCloseAuto extends OpMode {
+@Autonomous(name = "BlueSideCloseAuto", group = "Over-caffeinated")
+public class BlueSideCloseAuto extends OpMode {
+
     private Path turnToClassifier;
+
     private double shooterPower = -0.55;
     private double gatePower = -1;
     private Follower follower;
@@ -45,6 +48,7 @@ public class RedSideCloseAuto extends OpMode {
     private Pose startPose;
     private Pose backwardPose;
     private Pose exitPose;
+
     private Path moveBackward;
     private PathChain moveOut;
 
@@ -56,7 +60,7 @@ public class RedSideCloseAuto extends OpMode {
 
         moveOut = follower.pathBuilder()
                 .addPath(new BezierLine(backwardPose, exitPose))
-                .setLinearHeadingInterpolation(backwardPose.getHeading(), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(backwardPose.getHeading(), Math.toRadians(45))
                 .build();
     }
 
@@ -67,58 +71,54 @@ public class RedSideCloseAuto extends OpMode {
 
     public void autonomousPathUpdate() {
         switch (pathState) {
-            case 0: // Move backward
+            case 0:
                 follower.followPath(moveBackward);
                 telemetry.addLine("Backing up");
                 waitTime = 2000;
                 break;
-            case 1: // Gate reverse spin before shot 1
+            case 1:
                 gate.setPower(1);
                 waitTime = 1500;
                 break;
-            case 2: // Shoot ball 1
+            case 2:
                 shooterMotor.setPower(output);
                 gate.setPower(gatePower);
                 waitTime = 500;
                 break;
-            case 3: // Gate reverse spin before shot 2
+            case 3:
                 gate.setPower(1);
                 waitTime = 1500;
                 break;
-            case 4: // Shoot ball 2
+            case 4:
                 gate.setPower(gatePower);
                 waitTime = 500;
                 break;
-            case 5: // Gate reverse spin before shot 3
+            case 5:
                 gate.setPower(1);
                 waitTime = 1500;
                 break;
-            case 6: // Shoot ball 3
+            case 6:
                 gate.setPower(gatePower);
                 waitTime = 500;
                 break;
-            case 7: // Stop shooter
+            case 7:
                 gate.setPower(0);
                 TARGET_RPM = 00;
                 waitTime = 500;
                 break;
-            case 8: // Strafe left to exit
+            case 8:
                 follower.followPath(moveOut);
                 telemetry.addLine("Exiting Zone");
                 waitTime = 2000;
                 break;
-
-
         }
     }
 
     @Override
     public void loop() {
-
         if (pathState == 9 && turnToClassifier != null) {
             follower.followPath(turnToClassifier);
         }
-
 
         double targetTicksPerSec = (TARGET_RPM / 60.0) * TICKS_PER_REV;
         double currentTicksPerSec = shooterMotor.getVelocity();
@@ -176,20 +176,19 @@ public class RedSideCloseAuto extends OpMode {
         }
 
         double imuHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        imuHeading -= Math.PI / 2; // 90° counterclockwise turn for blue side
         telemetry.addData("IMU Initial Heading (rad)", imuHeading);
 
         startPose = new Pose(0, 0, imuHeading);
 
-        // Move backward 15 cm along heading
         double backX = -20 * Math.cos(imuHeading);
         double backY = -20 * Math.sin(imuHeading);
         backwardPose = new Pose(backX, backY, imuHeading);
 
-        // Strafe left ~22.5 cm from backwardPose
         double strafeDistance = 15;
-        double strafeX = backwardPose.getX() + strafeDistance * Math.cos(imuHeading - Math.PI / 2);
-        double strafeY = backwardPose.getY() + strafeDistance * Math.sin(imuHeading - Math.PI / 2);
-        exitPose = new Pose(strafeX , strafeY - 5, imuHeading);
+        double strafeX = backwardPose.getX() - strafeDistance * Math.cos(imuHeading - Math.PI / 2);
+        double strafeY = backwardPose.getY() - strafeDistance * Math.sin(imuHeading - Math.PI / 2);
+        exitPose = new Pose(strafeX, strafeY + 5, imuHeading);
 
         pathTimer = new Timer();
         pathTimer.resetTimer();

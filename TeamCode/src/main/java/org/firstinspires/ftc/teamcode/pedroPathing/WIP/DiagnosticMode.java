@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.pedroPathing;
+package org.firstinspires.ftc.teamcode.pedroPathing.WIP;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -8,24 +8,21 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.CRServo;
 
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
-@TeleOp(name="PewPewPewPewTeleop", group="TeleOp")
-public class PewPewTeleop extends OpMode {
+@TeleOp(name="DiagnosticMode", group="TeleOp")
+public class DiagnosticMode extends OpMode {
 
     // Motors and servos
-    private DcMotor leftFront, leftBack, rightFront, rightBack, noodleIntake;
+    private DcMotor leftFront, leftBack, rightFront, rightBack;
     private DcMotorEx shooterMotor;
-    private CRServo gate, feeder;
-    private Servo server;
+    private CRServo gate;
 
     // IMU and heading offset
     private IMU imu;
-    private int toggle = 0;
     public double headingOffset = 0;
 
     @Override
@@ -36,10 +33,7 @@ public class PewPewTeleop extends OpMode {
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightRear");
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
-        noodleIntake = hardwareMap.get(DcMotor.class, "intake");
         gate = hardwareMap.get(CRServo.class, "gate");
-        feeder = hardwareMap.get(CRServo.class, "intakeServo");
-        server = hardwareMap.get(Servo.class, "server");
 
         // Directions
         rightFront.setDirection(DcMotor.Direction.REVERSE);
@@ -56,7 +50,7 @@ public class PewPewTeleop extends OpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(
                 new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
                         RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
                 )
         ));
@@ -68,6 +62,8 @@ public class PewPewTeleop extends OpMode {
         headingOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         headingOffset = headingOffset + (Math.PI)/2;
     }
+    int individualMotorSwitch = 0;
+    int individualPower = 1;
 
     @Override
     public void loop() {
@@ -92,55 +88,41 @@ public class PewPewTeleop extends OpMode {
         double frontRightPower = (rotY - rotX - rx) / denominator;
         double backRightPower = (rotY + rotX - rx) / denominator;
 
-        // Set motor powers
-        leftFront.setPower(frontLeftPower);
-        leftBack.setPower(backLeftPower);
-        rightFront.setPower(frontRightPower);
-        rightBack.setPower(backRightPower);
 
-        // Gate control
-        if (gamepad2.dpad_left) {
-            gate.setPower(-1);
-        } else if (gamepad2.dpad_right) {
-            gate.setPower(1);
-        } else {
-            gate.setPower(0);
+
+
+        // Individual Motor Control
+        if(gamepad1.a) {
+            if (individualMotorSwitch == 0){
+                individualMotorSwitch = 1;
+            } else if (individualMotorSwitch == 1){
+                individualMotorSwitch = 0;
+            }
+            individualPower = 1;
         }
-        //Noodle Intake control
-        if (gamepad2.right_trigger == 1){
-            noodleIntake.setPower(-0.5);
-        } else if (gamepad2.left_trigger == 1){
-            noodleIntake.setPower(1);
-        }
-        //Servo Intake and Server control
-        if (gamepad2.dpad_up){
-            feeder.setPower(-1);
-        } else if (gamepad2.dpad_down){
-            feeder.setPower(1);
+        if (gamepad1.b){
+            individualPower = -1;
+
         }
 
-        if (gamepad2.right_bumper){
-            server.setPosition(0.85);
-        } else if (gamepad2.left_bumper){
-            server.setPosition(0.4);
+        if (individualMotorSwitch == 1) {
+            if (gamepad1.dpad_up) {
+                leftFront.setPower(individualPower);
+            } else if (gamepad1.dpad_down) {
+                leftBack.setPower(individualPower);
+            } else if (gamepad1.dpad_left) {
+                rightFront.setPower(individualPower);
+            } else if (gamepad1.dpad_right) {
+                rightBack.setPower(individualPower);
+            }
+        } else if (individualMotorSwitch == 0) {
+                // Set motor powers
+                leftFront.setPower(frontLeftPower);
+                leftBack.setPower(backLeftPower);
+                rightFront.setPower(frontRightPower);
+                rightBack.setPower(backRightPower);
         }
 
-        // Shooter control (simplified here; add your PID logic if you want)
-        // Example: set power directly with buttons
-        if (gamepad2.y) {
-            shooterMotor.setPower(0.7);
-        } else if (gamepad2.b) {
-            shooterMotor.setPower(0.85);
-        } else if (gamepad2.a) {
-            shooterMotor.setPower(1.0);
-        } else {
-            shooterMotor.setPower(0);
-        }
-
-        if (gamepad1.right_bumper) {
-            imu.resetYaw();
-            headingOffset = 0;
-        }
         // Telemetry
         telemetry.addData("Raw Heading (deg)", Math.toDegrees(rawHeading));
         telemetry.addData("Heading Offset (deg)", Math.toDegrees(headingOffset));

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.pedroPathing;
+package org.firstinspires.ftc.teamcode.pedroPathing.WIP;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
@@ -7,6 +7,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -14,11 +15,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
 
-@Autonomous(name = "RedSideFarAuto", group = "Over-caffeinated")
+@Disabled
+@Autonomous(name = "RedSideFarAuto2", group = "Over-caffeinated")
 public class RedSideFarAuto extends OpMode {
-
     private double shooterPower = -0.55;
     private double gatePower = -1;
     private Follower follower;
@@ -84,6 +84,7 @@ public class RedSideFarAuto extends OpMode {
                 waitTime = 1000;
                 break;
             case 2: // Shoot ball 1
+
                 shooterMotor.setPower(output);
                 gate.setPower(gatePower);
                 waitTime = 1500;

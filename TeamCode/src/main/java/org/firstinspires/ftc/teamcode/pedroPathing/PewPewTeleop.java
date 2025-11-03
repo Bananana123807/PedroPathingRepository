@@ -56,7 +56,7 @@ public class PewPewTeleop extends OpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(
                 new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
                         RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
                 )
         ));
@@ -108,7 +108,7 @@ public class PewPewTeleop extends OpMode {
         }
         //Noodle Intake control
         if (gamepad2.right_trigger == 1){
-            noodleIntake.setPower(-0.5);
+            noodleIntake.setPower(-0.67);
         } else if (gamepad2.left_trigger == 1){
             noodleIntake.setPower(1);
         }

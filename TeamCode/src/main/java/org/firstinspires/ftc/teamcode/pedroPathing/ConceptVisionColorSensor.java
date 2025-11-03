@@ -19,20 +19,24 @@
  * SOFTWARE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import android.util.Size;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
-
+import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
 /*
  * This OpMode illustrates how to use a video source (camera) as a color sensor
  *
@@ -59,8 +63,8 @@ import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Disabled
-@TeleOp(name = "Concept: Vision Color-Sensor", group = "Concept")
+
+@TeleOp(name = "WebcamColorSensor", group = "Concept")
 public class ConceptVisionColorSensor extends LinearOpMode
 {
     @Override
@@ -97,7 +101,8 @@ public class ConceptVisionColorSensor extends LinearOpMode
                         PredominantColorProcessor.Swatch.BLUE,
                         PredominantColorProcessor.Swatch.YELLOW,
                         PredominantColorProcessor.Swatch.BLACK,
-                        PredominantColorProcessor.Swatch.WHITE)
+                        PredominantColorProcessor.Swatch.WHITE
+                    )
                 .build();
 
         /*
@@ -115,15 +120,32 @@ public class ConceptVisionColorSensor extends LinearOpMode
         VisionPortal portal = new VisionPortal.Builder()
                 .addProcessor(colorSensor)
                 .setCameraResolution(new Size(320, 240))
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Camera"))
                 .build();
 
         telemetry.setMsTransmissionInterval(100);  // Speed up telemetry updates, for debugging.
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
+        String ballColor = "";
+        DcMotor leftFront, leftBack, rightFront, rightBack, noodleIntake;
+        DcMotorEx shooterMotor;
+        CRServo gate, feeder;
+        Servo server;
 
+        noodleIntake = hardwareMap.get(DcMotor.class, "intake");
+        gate = hardwareMap.get(CRServo.class, "gate");
+        feeder = hardwareMap.get(CRServo.class, "intakeServo");
+        server = hardwareMap.get(Servo.class, "server");
+
+        noodleIntake.setPower(-0.67);
         // WARNING:  To view the stream preview on the Driver Station, this code runs in INIT mode.
+        Timer pathTimer;
+
+        pathTimer = new Timer();
+        pathTimer.resetTimer();
+
         while (opModeIsActive() || opModeInInit())
         {
+            double elapsedTime = pathTimer.getElapsedTime();
             telemetry.addLine("Preview on/off: 3 dots, Camera Stream\n");
 
             // Request the most recent color analysis.  This will return the closest matching
@@ -136,12 +158,29 @@ public class ConceptVisionColorSensor extends LinearOpMode
             // Note: to take actions based on the detected color, simply use the colorSwatch or
             // color space value in a comparison or switch.   eg:
 
-            //    if (result.closestSwatch == PredominantColorProcessor.Swatch.RED) {.. some code ..}
-            //  or:
+             //  or:
             //    if (result.RGB[0] > 128) {... some code  ...}
 
             PredominantColorProcessor.Result result = colorSensor.getAnalysis();
+            if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_GREEN) {
+                ballColor = "Green";
+                telemetry.addData("Color Detected:", ballColor);
+            }
 
+            if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_PURPLE) {
+                ballColor = "Purple";
+                telemetry.addData("Color Detected:", ballColor);
+            }
+
+            if (ballColor.equals("Green") || ballColor.equals("Purple")){
+                if (elapsedTime > 500){
+                    server.setPosition(0.85);
+                    ballColor = "null";
+                    pathTimer.resetTimer();
+                }
+            } else {
+                server.setPosition(0.4);
+            }
             // Display the Color Sensor result.
             telemetry.addData("Best Match", result.closestSwatch);
             telemetry.addLine(String.format("RGB   (%3d, %3d, %3d)",
@@ -151,8 +190,6 @@ public class ConceptVisionColorSensor extends LinearOpMode
             telemetry.addLine(String.format("YCrCb (%3d, %3d, %3d)",
                                             result.YCrCb[0], result.YCrCb[1], result.YCrCb[2]));
             telemetry.update();
-
-            sleep(20);
         }
     }
 }

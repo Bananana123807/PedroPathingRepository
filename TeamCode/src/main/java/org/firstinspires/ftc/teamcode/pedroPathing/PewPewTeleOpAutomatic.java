@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -28,6 +29,16 @@ import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 
 @TeleOp(name="PewPewTeleopAutomatic", group="TeleOp")
 public class PewPewTeleOpAutomatic extends LinearOpMode {
+
+    double targetRPM = 0;
+    double kP = 0.0007;
+    double kI = 0.0005;
+    double kD = 0;
+
+    double integralSum = 0;
+    double lastError = 0;
+    ElapsedTime timer = new ElapsedTime();
+
 
     // Motors and servos
     private DcMotor leftFront, leftBack, rightFront, rightBack, noodleIntake;
@@ -52,6 +63,9 @@ public class PewPewTeleOpAutomatic extends LinearOpMode {
         gate = hardwareMap.get(CRServo.class, "gate");
         feeder = hardwareMap.get(CRServo.class, "intakeServo");
         server = hardwareMap.get(Servo.class, "server");
+
+
+
 
         // Directions
         rightFront.setDirection(DcMotor.Direction.REVERSE);
@@ -189,6 +203,26 @@ public class PewPewTeleOpAutomatic extends LinearOpMode {
             } else {
                 gate.setPower(0);
             }
+
+            if (gamepad2.y) targetRPM = 2700;
+            if (gamepad2.b) targetRPM = 2950;
+            if (gamepad2.a) targetRPM = 3500;
+            if (gamepad2.x) targetRPM = 4500;
+
+            double currentVelocity = shooterMotor.getVelocity();
+            double currentRPM = (currentVelocity / 28.0) * 60.0;
+
+            double error = targetRPM - currentRPM;
+            double deltaTime = timer.seconds();
+            integralSum += error * deltaTime;
+            double derivative = (error - lastError) / deltaTime;
+
+            double output = 1*((kP * error) + (kI * integralSum) + (kD * derivative));
+            shooterMotor.setPower(output);
+
+            lastError = error;
+            timer.reset();
+
             //Noodle Intake control
             if (gamepad2.left_trigger == 1){
                 noodleIntake.setPower(0);
@@ -233,13 +267,16 @@ public class PewPewTeleOpAutomatic extends LinearOpMode {
             telemetry.addData("RF Power", frontRightPower);
             telemetry.addData("RB Power", backRightPower);
             telemetry.addData("Best Match", result.closestSwatch);
-            telemetry.addLine(String.format("RGB   (%3d, %3d, %3d)",
-                    result.RGB[0], result.RGB[1], result.RGB[2]));
-            telemetry.addLine(String.format("HSV   (%3d, %3d, %3d)",
-                    result.HSV[0], result.HSV[1], result.HSV[2]));
-            telemetry.addLine(String.format("YCrCb (%3d, %3d, %3d)",
-                    result.YCrCb[0], result.YCrCb[1], result.YCrCb[2]));
+            telemetry.addData("Target RPM", targetRPM);
+            telemetry.addData("Current RPM", currentRPM);
+            telemetry.addData("Flywheel Power", output);
             telemetry.update();
+//            telemetry.addLine(String.format("RGB   (%3d, %3d, %3d)",
+//                    result.RGB[0], result.RGB[1], result.RGB[2]));
+//            telemetry.addLine(String.format("HSV   (%3d, %3d, %3d)",
+//                    result.HSV[0], result.HSV[1], result.HSV[2]));
+//            telemetry.addLine(String.format("YCrCb (%3d, %3d, %3d)",
+//                    result.YCrCb[0], result.YCrCb[1], result.YCrCb[2]));
     }
 
     // Utility to keep angle between -pi and pi

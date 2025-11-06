@@ -27,8 +27,8 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 
-@TeleOp(name="PewPewTeleopAutomatic", group="TeleOp")
-public class PewPewTeleOpAutomatic extends LinearOpMode {
+@TeleOp(name="PewPewTeleop", group="TeleOp")
+public class PewPewTeleOP extends LinearOpMode {
 
     double targetRPM = 0;
     double kP = 0.0007;

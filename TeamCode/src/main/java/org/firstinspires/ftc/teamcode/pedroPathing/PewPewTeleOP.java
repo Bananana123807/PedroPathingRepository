@@ -31,6 +31,9 @@ import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 public class PewPewTeleOP extends LinearOpMode {
 
     double targetRPM = 0;
+    double currentRPM, frontLeftPower, frontRightPower, botHeading,backLeftPower,backRightPower,rawHeading,output;
+    PredominantColorProcessor.Result result;
+    double mode=1;
     double kP = 0.0007;
     double kI = 0.0005;
     double kD = 0;
@@ -48,7 +51,6 @@ public class PewPewTeleOP extends LinearOpMode {
 
     // IMU and heading offset
     private IMU imu;
-    private int toggle = 0;
     public double headingOffset = 0;
 
     @Override
@@ -159,15 +161,43 @@ public class PewPewTeleOP extends LinearOpMode {
                 telemetry.addData("Color Detected:", ballColor);
             }
 
-            if (ballColor.equals("Green") || ballColor.equals("Purple")){
-                if(elapsedTime >= 500) {
-                    server.setPosition(0.85);
-                    ballColor = "null";
-                    pathTimer.resetTimer();
+            if (mode==1){
+                if (ballColor.equals("Green") || ballColor.equals("Purple")){
+                    if(elapsedTime >= 500) {
+                        server.setPosition(0.85);
+                        ballColor = "null";
+                        pathTimer.resetTimer();
+                    }
+
+                } else {
+                    server.setPosition(0.4);
                 }
-            } else {
-                server.setPosition(0.4);
+
+            } else if(mode==2){
+                if (ballColor.equals("Green")){
+                    if(elapsedTime >= 500) {
+                        server.setPosition(0.85);
+                        ballColor = "null";
+                        pathTimer.resetTimer();
+                    }
+
+                } else {
+                    server.setPosition(0.4);
+                }
+            } else if (mode ==3){
+                if (ballColor.equals("Purple")){
+                    if(elapsedTime >= 500) {
+                        server.setPosition(0.85);
+                        ballColor = "null";
+                        pathTimer.resetTimer();
+                    }
+
+                } else {
+                    server.setPosition(0.4);
+                }
             }
+
+
             // Gamepad inputs
             double y = -gamepad1.left_stick_y;  // Forward positive
             double x = gamepad1.left_stick_x;   // Strafe right positive
@@ -196,13 +226,15 @@ public class PewPewTeleOP extends LinearOpMode {
             rightBack.setPower(backRightPower);
 
             // Gate control
-            if (gamepad2.dpad_left) {
+            if (gamepad2.right_trigger==1) {
                 gate.setPower(-1);
-            } else if (gamepad2.dpad_right) {
+            } else if (gamepad2.left_trigger==0) {
                 gate.setPower(1);
             } else {
                 gate.setPower(0);
             }
+
+
 
             if (gamepad2.y) targetRPM = 2700;
             if (gamepad2.b) targetRPM = 2950;
@@ -224,22 +256,10 @@ public class PewPewTeleOP extends LinearOpMode {
             timer.reset();
 
             //Noodle Intake control
-            if (gamepad2.left_trigger == 1){
-                noodleIntake.setPower(0);
-            } else {
+            if (gamepad2.left_bumper){
                 noodleIntake.setPower(-0.75);
-            }
-            //Servo Intake and Server control
-            if (gamepad2.dpad_up){
-                feeder.setPower(-1);
-            } else if (gamepad2.dpad_down){
-                feeder.setPower(1);
-            }
-
-            if (gamepad2.right_bumper){
-                server.setPosition(0.85);
-            } else if (gamepad2.left_bumper){
-                server.setPosition(0.4);
+            } else if(gamepad2.right_bumper)
+                noodleIntake.setPower(0);
             }
 
             // Shooter control (simplified here; add your PID logic if you want)
@@ -252,6 +272,15 @@ public class PewPewTeleOP extends LinearOpMode {
                 shooterMotor.setPower(1.0);
             } else {
                 shooterMotor.setPower(0);
+            }
+            if (gamepad2.dpad_down || gamepad2.dpad_up) {
+                mode = 1;
+            }
+            if (gamepad2.dpad_right) {
+                mode = 2;//ths is for green
+            }
+            if (gamepad1.dpad_left){
+                mode=3;//this is for purple
             }
 
             if (gamepad1.right_bumper) {
@@ -271,27 +300,7 @@ public class PewPewTeleOP extends LinearOpMode {
             telemetry.addData("Current RPM", currentRPM);
             telemetry.addData("Flywheel Power", output);
             telemetry.update();
-//            telemetry.addLine(String.format("RGB   (%3d, %3d, %3d)",
-//                    result.RGB[0], result.RGB[1], result.RGB[2]));
-//            telemetry.addLine(String.format("HSV   (%3d, %3d, %3d)",
-//                    result.HSV[0], result.HSV[1], result.HSV[2]));
-//            telemetry.addLine(String.format("YCrCb (%3d, %3d, %3d)",
-//                    result.YCrCb[0], result.YCrCb[1], result.YCrCb[2]));
     }
 
-    // Utility to keep angle between -pi and pi
-//    private double normalizeRadians(double angle) {
-//        while (angle > Math.PI) angle -= 2.0 * Math.PI;
-//        while (angle < -Math.PI) angle += 2.0 * Math.PI;
-//        return angle;
-//    }
-
-    // Sleep helper
-//    private void sleep(long millis) {
-//        try {
-//            Thread.sleep(millis);
-//        } catch (InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//        }
-    }
 }
+

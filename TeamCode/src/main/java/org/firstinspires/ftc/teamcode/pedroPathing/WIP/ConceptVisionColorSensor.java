@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-package org.firstinspires.ftc.teamcode.pedroPathing;
+package org.firstinspires.ftc.teamcode.pedroPathing.WIP;
 
 import android.util.Size;
 
@@ -36,7 +36,6 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
-import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
 /*
  * This OpMode illustrates how to use a video source (camera) as a color sensor
  *

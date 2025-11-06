@@ -31,9 +31,9 @@ import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 public class PewPewTeleOP extends LinearOpMode {
 
     double targetRPM = 0;
-    double currentRPM, frontLeftPower, frontRightPower, botHeading,backLeftPower,backRightPower,rawHeading,output;
+    double currentRPM, frontLeftPower, frontRightPower, botHeading, backLeftPower, backRightPower, rawHeading, output;
     PredominantColorProcessor.Result result;
-    double mode=1;
+    double mode = 1;
     double kP = 0.0007;
     double kI = 0.0005;
     double kD = 0;
@@ -67,8 +67,6 @@ public class PewPewTeleOP extends LinearOpMode {
         server = hardwareMap.get(Servo.class, "server");
 
 
-
-
         // Directions
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightBack.setDirection(DcMotor.Direction.FORWARD);
@@ -94,7 +92,7 @@ public class PewPewTeleOP extends LinearOpMode {
 
         // Read initial heading and store offset
         headingOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-        headingOffset = headingOffset + (Math.PI)/2;
+        headingOffset = headingOffset + (Math.PI) / 2;
 
         PredominantColorProcessor colorSensor = new PredominantColorProcessor.Builder()
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-0.1, 0.1, 0.1, -0.1))
@@ -134,22 +132,22 @@ public class PewPewTeleOP extends LinearOpMode {
         pathTimer = new Timer();
         pathTimer.resetTimer();
 
-        while (opModeIsActive() || opModeInInit()){
+        while (opModeIsActive() || opModeInInit()) {
             double elapsedTime = pathTimer.getElapsedTime();
             telemetry.addLine("Preview on/off: 3 dots, Camera Stream\n");
 
-        // Request the most recent color analysis.  This will return the closest matching
-        // colorSwatch and the predominant color in the RGB, HSV and YCrCb color spaces.
-        // The color space values are returned as three-element int[] arrays as follows:
-        //  RGB   Red 0-255, Green 0-255, Blue 0-255
-        //  HSV   Hue 0-180, Saturation 0-255, Value 0-255
-        //  YCrCb Luminance(Y) 0-255, Cr 0-255 (center 128), Cb 0-255 (center 128)
-        //
-        // Note: to take actions based on the detected color, simply use the colorSwatch or
-        // color space value in a comparison or switch.   eg:
+            // Request the most recent color analysis.  This will return the closest matching
+            // colorSwatch and the predominant color in the RGB, HSV and YCrCb color spaces.
+            // The color space values are returned as three-element int[] arrays as follows:
+            //  RGB   Red 0-255, Green 0-255, Blue 0-255
+            //  HSV   Hue 0-180, Saturation 0-255, Value 0-255
+            //  YCrCb Luminance(Y) 0-255, Cr 0-255 (center 128), Cb 0-255 (center 128)
+            //
+            // Note: to take actions based on the detected color, simply use the colorSwatch or
+            // color space value in a comparison or switch.   eg:
 
-        //  or:
-        //    if (result.RGB[0] > 128) {... some code  ...}
+            //  or:
+            //    if (result.RGB[0] > 128) {... some code  ...}
             PredominantColorProcessor.Result result = colorSensor.getAnalysis();
             if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_GREEN) {
                 ballColor = "Green";
@@ -161,9 +159,9 @@ public class PewPewTeleOP extends LinearOpMode {
                 telemetry.addData("Color Detected:", ballColor);
             }
 
-            if (mode==1){
-                if (ballColor.equals("Green") || ballColor.equals("Purple")){
-                    if(elapsedTime >= 500) {
+            if (mode == 1) {
+                if (ballColor.equals("Green") || ballColor.equals("Purple")) {
+                    if (elapsedTime >= 500) {
                         server.setPosition(0.85);
                         ballColor = "null";
                         pathTimer.resetTimer();
@@ -173,9 +171,9 @@ public class PewPewTeleOP extends LinearOpMode {
                     server.setPosition(0.4);
                 }
 
-            } else if(mode==2){
-                if (ballColor.equals("Green")){
-                    if(elapsedTime >= 500) {
+            } else if (mode == 2) {
+                if (ballColor.equals("Green")) {
+                    if (elapsedTime >= 500) {
                         server.setPosition(0.85);
                         ballColor = "null";
                         pathTimer.resetTimer();
@@ -184,9 +182,9 @@ public class PewPewTeleOP extends LinearOpMode {
                 } else {
                     server.setPosition(0.4);
                 }
-            } else if (mode ==3){
-                if (ballColor.equals("Purple")){
-                    if(elapsedTime >= 500) {
+            } else if (mode == 3) {
+                if (ballColor.equals("Purple")) {
+                    if (elapsedTime >= 500) {
                         server.setPosition(0.85);
                         ballColor = "null";
                         pathTimer.resetTimer();
@@ -194,113 +192,108 @@ public class PewPewTeleOP extends LinearOpMode {
 
                 } else {
                     server.setPosition(0.4);
+                    // Gamepad inputs
+                    double y = -gamepad1.left_stick_y;  // Forward positive
+                    double x = gamepad1.left_stick_x;   // Strafe right positive
+                    double rx = gamepad1.right_stick_x; // Rotation
+
+                    // Read raw IMU heading and adjust with offset
+                    double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+                    double botHeading = rawHeading - headingOffset;
+                    botHeading = normalizeRadians(botHeading);
+
+                    // Field-centric transform
+                    double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+                    double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+                    // Motor power calculations
+                    double denominator = -1 * (Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1.0));
+                    double frontLeftPower = (rotY + rotX + rx) / denominator;
+                    double backLeftPower = (rotY - rotX + rx) / denominator;
+                    double frontRightPower = (rotY - rotX - rx) / denominator;
+                    double backRightPower = (rotY + rotX - rx) / denominator;
+
+                    // Set motor powers
+                    leftFront.setPower(frontLeftPower);
+                    leftBack.setPower(backLeftPower);
+                    rightFront.setPower(frontRightPower);
+                    rightBack.setPower(backRightPower);
+
+                    // Gate control
+                    if (gamepad2.right_trigger == 1) {
+                        gate.setPower(-1);
+                    } else if (gamepad2.left_trigger == 0) {
+                        gate.setPower(1);
+                    } else {
+                        gate.setPower(0);
+                    }
+
+
+                    if (gamepad2.y) targetRPM = 2700;
+                    if (gamepad2.b) targetRPM = 2950;
+                    if (gamepad2.a) targetRPM = 3500;
+                    if (gamepad2.x) targetRPM = 4500;
+
+                    double currentVelocity = shooterMotor.getVelocity();
+                    double currentRPM = (currentVelocity / 28.0) * 60.0;
+
+                    double error = targetRPM - currentRPM;
+                    double deltaTime = timer.seconds();
+                    integralSum += error * deltaTime;
+                    double derivative = (error - lastError) / deltaTime;
+
+                    double output = 1 * ((kP * error) + (kI * integralSum) + (kD * derivative));
+                    shooterMotor.setPower(output);
+
+                    lastError = error;
+                    timer.reset();
+
+                    //Noodle Intake control
+                    if (gamepad2.left_bumper) {
+                        noodleIntake.setPower(-0.75);
+                    } else if (gamepad2.right_bumper)
+                        noodleIntake.setPower(0);
                 }
+
+                // Shooter control (simplified here; add your PID logic if you want)
+                // Example: set power directly with buttons
+                if (gamepad2.y) {
+                    shooterMotor.setPower(0.7);
+                } else if (gamepad2.b) {
+                    shooterMotor.setPower(0.85);
+                } else if (gamepad2.a) {
+                    shooterMotor.setPower(1.0);
+                } else {
+                    shooterMotor.setPower(0);
+                }
+                if (gamepad2.dpad_down || gamepad2.dpad_up) {
+                    mode = 1;
+                }
+                if (gamepad2.dpad_right) {
+                    mode = 2;//ths is for green
+                }
+                if (gamepad1.dpad_left) {
+                    mode = 3;//this is for purple
+                }
+
+                if (gamepad1.right_bumper) {
+                    imu.resetYaw();
+                    headingOffset = 0;
+                }
+                // Telemetry
+                telemetry.addData("Raw Heading (deg)", Math.toDegrees(rawHeading));
+                telemetry.addData("Heading Offset (deg)", Math.toDegrees(headingOffset));
+                telemetry.addData("Adjusted Heading (deg)", Math.toDegrees(botHeading));
+                telemetry.addData("LF Power", frontLeftPower);
+                telemetry.addData("LB Power", backLeftPower);
+                telemetry.addData("RF Power", frontRightPower);
+                telemetry.addData("RB Power", backRightPower);
+                telemetry.addData("Best Match", result.closestSwatch);
+                telemetry.addData("Target RPM", targetRPM);
+                telemetry.addData("Current RPM", currentRPM);
+                telemetry.addData("Flywheel Power", output);
+                telemetry.update();
             }
-
-
-            // Gamepad inputs
-            double y = -gamepad1.left_stick_y;  // Forward positive
-            double x = gamepad1.left_stick_x;   // Strafe right positive
-            double rx = gamepad1.right_stick_x; // Rotation
-
-            // Read raw IMU heading and adjust with offset
-            double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-            double botHeading = rawHeading-headingOffset;
-            botHeading = normalizeRadians(botHeading);
-
-            // Field-centric transform
-            double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-            double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
-
-            // Motor power calculations
-            double denominator = -1*(Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1.0));
-            double frontLeftPower = (rotY + rotX + rx) / denominator;
-            double backLeftPower = (rotY - rotX + rx) / denominator;
-            double frontRightPower = (rotY - rotX - rx) / denominator;
-            double backRightPower = (rotY + rotX - rx) / denominator;
-
-            // Set motor powers
-            leftFront.setPower(frontLeftPower);
-            leftBack.setPower(backLeftPower);
-            rightFront.setPower(frontRightPower);
-            rightBack.setPower(backRightPower);
-
-            // Gate control
-            if (gamepad2.right_trigger==1) {
-                gate.setPower(-1);
-            } else if (gamepad2.left_trigger==0) {
-                gate.setPower(1);
-            } else {
-                gate.setPower(0);
-            }
-
-
-
-            if (gamepad2.y) targetRPM = 2700;
-            if (gamepad2.b) targetRPM = 2950;
-            if (gamepad2.a) targetRPM = 3500;
-            if (gamepad2.x) targetRPM = 4500;
-
-            double currentVelocity = shooterMotor.getVelocity();
-            double currentRPM = (currentVelocity / 28.0) * 60.0;
-
-            double error = targetRPM - currentRPM;
-            double deltaTime = timer.seconds();
-            integralSum += error * deltaTime;
-            double derivative = (error - lastError) / deltaTime;
-
-            double output = 1*((kP * error) + (kI * integralSum) + (kD * derivative));
-            shooterMotor.setPower(output);
-
-            lastError = error;
-            timer.reset();
-
-            //Noodle Intake control
-            if (gamepad2.left_bumper){
-                noodleIntake.setPower(-0.75);
-            } else if(gamepad2.right_bumper)
-                noodleIntake.setPower(0);
-            }
-
-            // Shooter control (simplified here; add your PID logic if you want)
-            // Example: set power directly with buttons
-            if (gamepad2.y) {
-                shooterMotor.setPower(0.7);
-            } else if (gamepad2.b) {
-                shooterMotor.setPower(0.85);
-            } else if (gamepad2.a) {
-                shooterMotor.setPower(1.0);
-            } else {
-                shooterMotor.setPower(0);
-            }
-            if (gamepad2.dpad_down || gamepad2.dpad_up) {
-                mode = 1;
-            }
-            if (gamepad2.dpad_right) {
-                mode = 2;//ths is for green
-            }
-            if (gamepad1.dpad_left){
-                mode=3;//this is for purple
-            }
-
-            if (gamepad1.right_bumper) {
-                imu.resetYaw();
-                headingOffset = 0;
-            }
-            // Telemetry
-            telemetry.addData("Raw Heading (deg)", Math.toDegrees(rawHeading));
-            telemetry.addData("Heading Offset (deg)", Math.toDegrees(headingOffset));
-            telemetry.addData("Adjusted Heading (deg)", Math.toDegrees(botHeading));
-            telemetry.addData("LF Power", frontLeftPower);
-            telemetry.addData("LB Power", backLeftPower);
-            telemetry.addData("RF Power", frontRightPower);
-            telemetry.addData("RB Power", backRightPower);
-            telemetry.addData("Best Match", result.closestSwatch);
-            telemetry.addData("Target RPM", targetRPM);
-            telemetry.addData("Current RPM", currentRPM);
-            telemetry.addData("Flywheel Power", output);
-            telemetry.update();
+        }
     }
-
 }
-

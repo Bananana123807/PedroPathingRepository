@@ -136,7 +136,6 @@ public class ConceptVisionColorSensor extends LinearOpMode
         server = hardwareMap.get(Servo.class, "server");
 
         noodleIntake.setPower(-0.67);
-        // WARNING:  To view the stream preview on the Driver Station, this code runs in INIT mode.
         Timer pathTimer;
 
         pathTimer = new Timer();

@@ -80,7 +80,6 @@ public class RedSideCloseAuto extends OpMode {
             gate.setPower(0);
             isShooting = false;
         }
-
     }
 
 

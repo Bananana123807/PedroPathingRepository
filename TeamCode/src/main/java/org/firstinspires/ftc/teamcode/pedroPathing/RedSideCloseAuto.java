@@ -231,7 +231,6 @@ public class RedSideCloseAuto extends OpMode {
         follower.setStartingPose(startPose);
         buildPaths();
 
-
         telemetry.update();
     }
 }

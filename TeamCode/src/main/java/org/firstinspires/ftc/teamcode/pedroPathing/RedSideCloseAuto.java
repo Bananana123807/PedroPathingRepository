@@ -47,7 +47,7 @@ public class RedSideCloseAuto extends OpMode {
     private String ballColor = "";
     DcMotor noodleIntake;
     Servo server;
-    PredominantColorProcessor colorSensor;
+    private PredominantColorProcessor colorSensor;
 
     public void buildPaths() {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
@@ -75,7 +75,7 @@ public class RedSideCloseAuto extends OpMode {
         double elapsed = ballTimer.getElapsedTime();
 
         if (elapsed >= 1000 && elapsed < 1500) {
-            gate.setPower(-1);
+            gate.setPower(gatePower);
         } else if (elapsed >= 1500) {
             gate.setPower(0);
             isShooting = false;
@@ -98,13 +98,17 @@ public class RedSideCloseAuto extends OpMode {
                 shootBall();
                 waitTime = 100;
                 break;
+
+                //add more cases here, but change numbers for 5 & 6
             case 5:
-                gate.setPower(0);
-                shooterMotor.setPower(0);
-                break;
-            case 6:
                 follower.followPath(moveOut);
                 telemetry.addLine("Moving Out");
+                break;
+            case 6:
+                gate.setPower(0);
+                shooterMotor.setPower(0);
+                noodleIntake.setPower(0);
+                telemetry.addLine("Auto Complete");
                 break;
         }
     }
@@ -119,6 +123,11 @@ public class RedSideCloseAuto extends OpMode {
 
         PredominantColorProcessor.Result result = colorSensor.getAnalysis();
 
+        if (result == null) {
+            telemetry.addLine("Waiting for camera...");
+            return;
+        }
+
         if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_GREEN) {
             ballColor = "Green";
             telemetry.addData("Color Detected:", ballColor);
@@ -132,7 +141,7 @@ public class RedSideCloseAuto extends OpMode {
         if (ballColor.equals("Green") || ballColor.equals("Purple")){
             if (elapsedPickTime > 500){
                 server.setPosition(0.85);
-                ballColor = "null";
+                ballColor = "No Ball Detected";
                 pickTimer.resetTimer();
             }
         } else {
@@ -143,7 +152,7 @@ public class RedSideCloseAuto extends OpMode {
             shootBall();
         }
 
-        if (elapsedTime >= waitTime) {
+        if (elapsedTime >= waitTime && !isShooting) {
             counter += 1;
             setPathState(counter);
             autonomousPathUpdate();
@@ -156,7 +165,6 @@ public class RedSideCloseAuto extends OpMode {
                 result.HSV[0], result.HSV[1], result.HSV[2]));
         telemetry.addLine(String.format("YCrCb (%3d, %3d, %3d)",
                 result.YCrCb[0], result.YCrCb[1], result.YCrCb[2]));
-        telemetry.update();
         telemetry.addData("path state", pathState);
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
@@ -169,6 +177,7 @@ public class RedSideCloseAuto extends OpMode {
     @Override
     public void start() {
         pathTimer.resetTimer();
+        noodleIntake.setPower(-0.67);
     }
 
 
@@ -177,8 +186,10 @@ public class RedSideCloseAuto extends OpMode {
 
         shooterMotor = hardwareMap.get(DcMotor.class, "shooterMotor");
         gate = hardwareMap.get(CRServo.class, "gate");
+            noodleIntake = hardwareMap.get(DcMotor.class, "intake");
+            server = hardwareMap.get(Servo.class, "server");
 
-        PredominantColorProcessor colorSensor = new PredominantColorProcessor.Builder()
+        colorSensor = new PredominantColorProcessor.Builder()
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-0.1, 0.1, 0.1, -0.1))
                 .setSwatches(
                         PredominantColorProcessor.Swatch.ARTIFACT_GREEN,
@@ -191,18 +202,6 @@ public class RedSideCloseAuto extends OpMode {
                 )
                 .build();
 
-        /*
-         * Build a vision portal to run the Color Sensor process.
-         *
-         *  - Add the colorSensor process created above.
-         *  - Set the desired video resolution.
-         *      Since a high resolution will not improve this process, choose a lower resolution
-         *      supported by your camera.  This will improve overall performance and reduce latency.
-         *  - Choose your video source.  This may be
-         *      .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))  .....   for a webcam
-         *  or
-         *      .setCamera(BuiltinCameraDirection.BACK)    ... for a Phone Camera
-         */
         VisionPortal portal = new VisionPortal.Builder()
                 .addProcessor(colorSensor)
                 .setCameraResolution(new Size(320, 240))
@@ -211,12 +210,6 @@ public class RedSideCloseAuto extends OpMode {
 
         telemetry.setMsTransmissionInterval(100);
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
-
-        noodleIntake = hardwareMap.get(DcMotor.class, "intake");
-        gate = hardwareMap.get(CRServo.class, "gate");
-        server = hardwareMap.get(Servo.class, "server");
-
-        noodleIntake.setPower(-0.67);
 
         pathTimer = new Timer();
         pathTimer.resetTimer();

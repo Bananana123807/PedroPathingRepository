@@ -11,6 +11,7 @@ import com.pedropathing.ftc.localization.Encoder;
 import com.pedropathing.ftc.localization.constants.TwoWheelConstants;
 import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -32,10 +33,14 @@ public class Constants {
             .rightRearMotorName("rightRear")
             .leftFrontMotorName("leftFront")
             .leftRearMotorName("leftRear")
-            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .leftFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .leftRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+//            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
+//            .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
+//            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+//            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             .xVelocity(60.101541167104244)
             .yVelocity(51.14004993104806);
 

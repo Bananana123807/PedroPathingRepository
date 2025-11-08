@@ -32,7 +32,7 @@ public class RedSideCloseAuto extends OpMode {
     private CRServo gate = null;
     private int pathState;
     private int counter = 0;
-    private final Pose startPose = new Pose(0, 0);
+    private final Pose startPose = new Pose(0, 0, 0);
     private final Pose scorePose = new Pose(-30, 0);
     private final Pose setOne = new Pose(-40, -10);
     private final Pose ball1Pose = new Pose(-40, -15);
@@ -272,7 +272,6 @@ public class RedSideCloseAuto extends OpMode {
         follower.setStartingPose(startPose);
         buildPaths();
 
-        Constants.localizerConstants.imu.resetYaw();
         telemetry.update();
     }
 }

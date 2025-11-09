@@ -18,14 +18,19 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Configurable
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(8.25)
-            .forwardZeroPowerAcceleration(-33.83770490164275)
-            .lateralZeroPowerAcceleration(-60.632029174232976)
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.02, 0.01))
-            .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.01, 0.03))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.01, 0, 0.001, 0.6, 0.00001));
+            .mass(10.3)
+            .forwardZeroPowerAcceleration(-34.087337021632116)
+            .lateralZeroPowerAcceleration(-50.045250560472056)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.06, 0, 0.01, 0.02))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.9, 0, 0.002, 0.025))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.05, 0, 0.0001, 0.6, 0.025))
+            .centripetalScaling(0.0005);
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(
+            0.99,
+            100,
+            1.2,
+            1);
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
@@ -37,8 +42,8 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .xVelocity(60.101541167104244)
-            .yVelocity(51.14004993104806);
+            .xVelocity(77.37161062744411)
+            .yVelocity(49.123272676917324);
 
     public static TwoWheelConstants localizerConstants = new TwoWheelConstants()
             .forwardEncoder_HardwareMapName("y-odo")
@@ -51,11 +56,11 @@ public class Constants {
                     )
             )
             .forwardPodY(6)
-            .strafePodX(2.5)
+            .strafePodX(2)
             .forwardEncoderDirection(Encoder.FORWARD)
             .strafeEncoderDirection(Encoder.REVERSE)
-            .forwardTicksToInches(0.0029449588)
-            .strafeTicksToInches(0.002943858);
+            .forwardTicksToInches(0.00406239)
+            .strafeTicksToInches(0.002974358);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)

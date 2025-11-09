@@ -20,10 +20,10 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 
-@Autonomous(name = "RedSideCloseAuto2", group = "Over-caffeinated")
+@Autonomous(name = "RedSideCloseAuto", group = "Over-caffeinated")
 public class RedSideCloseAuto extends OpMode {
 
-    private double shooterPower = -0.55;
+    private double shooterPower = -0.63;
     private double gatePower = -1;
     int ballNum = 0;
     private Follower follower;
@@ -33,12 +33,12 @@ public class RedSideCloseAuto extends OpMode {
     private int pathState;
     private int counter = 0;
     private final Pose startPose = new Pose(0, 0, 0);
-    private final Pose scorePose = new Pose(-30, 0);
-    private final Pose setOne = new Pose(-40, -10);
-    private final Pose ball1Pose = new Pose(-40, -15);
-    private final Pose ball2Pose = new Pose(-40, -20);
-    private final Pose ball3Pose = new Pose(-40, -25);
-    private final Pose moveOutPose = new Pose(-30, -15);
+    private final Pose scorePose = new Pose(-35, 0);
+    private final Pose setOne = new Pose(-32, -18);
+    private final Pose ball1Pose = new Pose(-45, -35);
+    private final Pose ball2Pose = new Pose(-40, -40);
+    private final Pose ball3Pose = new Pose(-35, -45);
+    private final Pose moveOutPose = new Pose(-30, -25);
     private Path scorePreload;
     private PathChain setOnePath, ball1, ball2, ball3, moveOut, scoreSet1;
     private double waitTime = 0;
@@ -54,27 +54,27 @@ public class RedSideCloseAuto extends OpMode {
 
         setOnePath = follower.pathBuilder()
                 .addPath(new BezierLine(scorePose, setOne))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-36))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
                 .build();
 
         ball1 = follower.pathBuilder()
                 .addPath(new BezierLine(setOne, ball1Pose))
-                .setConstantHeadingInterpolation(Math.toRadians(-36))
+                .setConstantHeadingInterpolation(Math.toRadians(-45))
                 .build();
 
         ball2 = follower.pathBuilder()
                 .addPath(new BezierLine(ball1Pose, ball2Pose))
-                .setConstantHeadingInterpolation(Math.toRadians(-36))
+                .setConstantHeadingInterpolation(Math.toRadians(-45))
                 .build();
 
         ball3 = follower.pathBuilder()
                 .addPath(new BezierLine(ball2Pose, ball3Pose))
-                .setConstantHeadingInterpolation(Math.toRadians(-36))
+                .setConstantHeadingInterpolation(Math.toRadians(-45))
                 .build();
 
         scoreSet1 = follower.pathBuilder()
                 .addPath(new BezierLine(ball3Pose, scorePose))
-                .setLinearHeadingInterpolation(Math.toRadians(-36), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
                 .build();
 
         moveOut = follower.pathBuilder()
@@ -98,7 +98,7 @@ public class RedSideCloseAuto extends OpMode {
 
         double elapsed = ballTimer.getElapsedTime();
 
-        if (elapsed >= 1000 && elapsed < 1500) {
+        if (elapsed >= 1000 && elapsed < 1850) {
             gate.setPower(gatePower);
         } else if (elapsed >= 1500) {
             gate.setPower(0);
@@ -117,9 +117,9 @@ public class RedSideCloseAuto extends OpMode {
             case 2:
             case 3:
             case 4:
-            case 10:
-            case 11:
-            case 12:
+//            case 10:
+//            case 11:
+//            case 12:
                 shootBall();
                 waitTime = 100;
                 break;
@@ -128,31 +128,31 @@ public class RedSideCloseAuto extends OpMode {
                 telemetry.addLine("PickupPose");
                 waitTime = 1500;
                 break;
+//            case 6:
+//                follower.followPath(ball1);
+//                telemetry.addLine("Picking ball 1");
+//                waitTime = 1500;
+//                break;
+//            case 7:
+//                follower.followPath(ball2);
+//                telemetry.addLine("Picking ball 2");
+//                waitTime = 1500;
+//                break;
+//            case 8:
+//                follower.followPath(ball3);
+//                telemetry.addLine("Picking ball 3");
+//                waitTime = 1500;
+//                break;
+//            case 9:
+//                follower.followPath(scoreSet1);
+//                telemetry.addLine("Scoring");
+//                waitTime = 1500;
+//                break;
+//            case 6:
+//                follower.followPath(moveOut);
+//                telemetry.addLine("Moving Out");
+//                break;
             case 6:
-                follower.followPath(ball1);
-                telemetry.addLine("Picking ball 1");
-                waitTime = 1500;
-                break;
-            case 7:
-                follower.followPath(ball2);
-                telemetry.addLine("Picking ball 2");
-                waitTime = 1500;
-                break;
-            case 8:
-                follower.followPath(ball3);
-                telemetry.addLine("Picking ball 3");
-                waitTime = 1500;
-                break;
-            case 9:
-                follower.followPath(scoreSet1);
-                telemetry.addLine("Scoring");
-                waitTime = 1500;
-                break;
-            case 13:
-                follower.followPath(moveOut);
-                telemetry.addLine("Moving Out");
-                break;
-            case 14:
                 gate.setPower(0);
                 shooterMotor.setPower(0);
                 noodleIntake.setPower(0);

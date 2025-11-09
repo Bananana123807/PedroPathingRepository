@@ -33,14 +33,10 @@ public class Constants {
             .rightRearMotorName("rightRear")
             .leftFrontMotorName("leftFront")
             .leftRearMotorName("leftRear")
-            .leftFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .leftRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-//            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-//            .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-//            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-//            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .xVelocity(60.101541167104244)
             .yVelocity(51.14004993104806);
 

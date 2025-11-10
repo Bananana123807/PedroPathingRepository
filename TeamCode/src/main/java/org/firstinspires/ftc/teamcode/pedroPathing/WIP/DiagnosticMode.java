@@ -1,0 +1,152 @@
+package org.firstinspires.ftc.teamcode.pedroPathing.WIP;
+
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.CRServo;
+
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+@TeleOp(name="DiagnosticMode", group="TeleOp")
+public class DiagnosticMode extends OpMode {
+
+    // Motors and servos
+    private DcMotor leftFront, leftBack, rightFront, rightBack;
+    private DcMotorEx shooterMotor;
+    private CRServo gate;
+
+    // IMU and heading offset
+    private IMU imu;
+    public double headingOffset = 0;
+
+    @Override
+    public void init() {
+        // Hardware mapping
+        leftFront = hardwareMap.get(DcMotor.class, "leftFront");
+        leftBack = hardwareMap.get(DcMotor.class, "leftRear");
+        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
+        rightBack = hardwareMap.get(DcMotor.class, "rightRear");
+        shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
+        gate = hardwareMap.get(CRServo.class, "gate");
+
+        // Directions
+        rightFront.setDirection(DcMotor.Direction.REVERSE);
+        rightBack.setDirection(DcMotor.Direction.REVERSE);
+        shooterMotor.setDirection(DcMotor.Direction.REVERSE);
+
+        // Brake behavior
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // IMU initialization with robot orientation
+        imu = hardwareMap.get(IMU.class, "imu");
+        imu.initialize(new IMU.Parameters(
+                new RevHubOrientationOnRobot(
+                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                        RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD
+                )
+        ));
+
+        // Wait briefly to allow IMU to stabilize
+        sleep(500);
+
+        // Read initial heading and store offset
+        headingOffset = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        headingOffset = headingOffset + (Math.PI)/2;
+    }
+    int individualMotorSwitch = 0;
+    int individualPower = 1;
+
+    @Override
+    public void loop() {
+        // Gamepad inputs
+        double y = -gamepad1.left_stick_y;  // Forward positive
+        double x = gamepad1.left_stick_x;   // Strafe right positive
+        double rx = gamepad1.right_stick_x; // Rotation
+
+        // Read raw IMU heading and adjust with offset
+        double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+        double botHeading = rawHeading-headingOffset;
+        botHeading = normalizeRadians(botHeading);
+
+        // Field-centric transform
+        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+        // Motor power calculations
+        double denominator = -1*(Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1.0));
+        double frontLeftPower = (rotY + rotX + rx) / denominator;
+        double backLeftPower = (rotY - rotX + rx) / denominator;
+        double frontRightPower = (rotY - rotX - rx) / denominator;
+        double backRightPower = (rotY + rotX - rx) / denominator;
+
+
+
+
+        // Individual Motor Control
+        if(gamepad1.a) {
+            if (individualMotorSwitch == 0){
+                individualMotorSwitch = 1;
+            } else if (individualMotorSwitch == 1){
+                individualMotorSwitch = 0;
+            }
+            individualPower = 1;
+        }
+        if (gamepad1.b){
+            individualPower = -1;
+
+        }
+
+        if (individualMotorSwitch == 1) {
+            if (gamepad1.dpad_up) {
+                leftFront.setPower(individualPower);
+            } else if (gamepad1.dpad_down) {
+                leftBack.setPower(individualPower);
+            } else if (gamepad1.dpad_left) {
+                rightFront.setPower(individualPower);
+            } else if (gamepad1.dpad_right) {
+                rightBack.setPower(individualPower);
+            }
+        } else if (individualMotorSwitch == 0) {
+                // Set motor powers
+                leftFront.setPower(frontLeftPower);
+                leftBack.setPower(backLeftPower);
+                rightFront.setPower(frontRightPower);
+                rightBack.setPower(backRightPower);
+        }
+
+        // Telemetry
+        telemetry.addData("Raw Heading (deg)", Math.toDegrees(rawHeading));
+        telemetry.addData("Heading Offset (deg)", Math.toDegrees(headingOffset));
+        telemetry.addData("Adjusted Heading (deg)", Math.toDegrees(botHeading));
+        telemetry.addData("LF Power", frontLeftPower);
+        telemetry.addData("LB Power", backLeftPower);
+        telemetry.addData("RF Power", frontRightPower);
+        telemetry.addData("RB Power", backRightPower);
+        telemetry.update();
+    }
+
+    // Utility to keep angle between -pi and pi
+    private double normalizeRadians(double angle) {
+        while (angle > Math.PI) angle -= 2.0 * Math.PI;
+        while (angle < -Math.PI) angle += 2.0 * Math.PI;
+        return angle;
+    }
+
+    // Sleep helper
+    private void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import android.util.Size;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -23,7 +24,7 @@ import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 @Autonomous(name = "RedSideCloseAuto", group = "Over-caffeinated")
 public class RedSideCloseAuto extends OpMode {
 
-    private double shooterPower = -0.63;
+    private double shooterPower = -0.55;
     private double gatePower = -1;
     int ballNum = 0;
     private Follower follower;
@@ -34,13 +35,14 @@ public class RedSideCloseAuto extends OpMode {
     private int counter = 0;
     private final Pose startPose = new Pose(0, 0, 0);
     private final Pose scorePose = new Pose(-35, 0);
-    private final Pose setOne = new Pose(-32, -18);
-    private final Pose ball1Pose = new Pose(-45, -35);
-    private final Pose ball2Pose = new Pose(-40, -40);
-    private final Pose ball3Pose = new Pose(-35, -45);
+    private final Pose setOne = new Pose(-37, -13.78);
+    private final Pose controlPoint = new Pose(-21.88, 50.38);
+    private final Pose ball1Pose = new Pose(-42, -17);
+    private final Pose ball2Pose = new Pose(-32, -17.4);
+    private final Pose ball3Pose = new Pose(-28.25, -20.88);
     private final Pose moveOutPose = new Pose(-30, -25);
     private Path scorePreload;
-    private PathChain setOnePath, ball1, ball2, ball3, moveOut, scoreSet1;
+    private PathChain setOnePath, goBack, ball1, ball2, ball3, moveOut, scoreSet1;
     private double waitTime = 0;
     private boolean isShooting = false;
     private String ballColor = "";
@@ -52,14 +54,19 @@ public class RedSideCloseAuto extends OpMode {
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setConstantHeadingInterpolation(Math.toRadians(0));
 
+        goBack = follower.pathBuilder()
+                .addPath(new BezierLine(scorePose, startPose))
+                .setConstantHeadingInterpolation(0)
+                .build();
+
         setOnePath = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, setOne))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
+                .addPath(new BezierCurve(startPose, controlPoint, setOne))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-36))
                 .build();
 
         ball1 = follower.pathBuilder()
                 .addPath(new BezierLine(setOne, ball1Pose))
-                .setConstantHeadingInterpolation(Math.toRadians(-45))
+                .setConstantHeadingInterpolation(Math.toRadians(-36))
                 .build();
 
         ball2 = follower.pathBuilder()
@@ -124,15 +131,20 @@ public class RedSideCloseAuto extends OpMode {
                 waitTime = 100;
                 break;
             case 5:
+                follower.followPath(goBack);
+                telemetry.addLine("Going back to curve");
+                waitTime = 1000;
+
+                break;
+            case 6:
                 follower.followPath(setOnePath);
                 telemetry.addLine("PickupPose");
                 waitTime = 1500;
+            case 7:
+                follower.followPath(ball1);
+                telemetry.addLine("Picking ball 1");
+                waitTime = 2000;
                 break;
-//            case 6:
-//                follower.followPath(ball1);
-//                telemetry.addLine("Picking ball 1");
-//                waitTime = 1500;
-//                break;
 //            case 7:
 //                follower.followPath(ball2);
 //                telemetry.addLine("Picking ball 2");
@@ -152,7 +164,7 @@ public class RedSideCloseAuto extends OpMode {
 //                follower.followPath(moveOut);
 //                telemetry.addLine("Moving Out");
 //                break;
-            case 6:
+            case 8:
                 gate.setPower(0);
                 shooterMotor.setPower(0);
                 noodleIntake.setPower(0);

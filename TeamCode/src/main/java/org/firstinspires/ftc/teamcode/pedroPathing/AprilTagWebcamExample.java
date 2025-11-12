@@ -17,11 +17,24 @@ public class AprilTagWebcamExample extends OpMode {
     @Override
     public void loop(){
         aprilTagWebcam.update();
+
+        //Blue Side AprilTag ID
         AprilTagDetection id20 = aprilTagWebcam.getTagBySpecificID(20);
         aprilTagWebcam.displayDetectionTelemetry(id20);
-        telemetry.addData("id20 String", id20.toString());
+
+        //AprilTag ID for Motifs
+        AprilTagDetection id21 = aprilTagWebcam.getTagBySpecificID(20);
+        aprilTagWebcam.displayDetectionTelemetry(id21);
+
+        AprilTagDetection id22 = aprilTagWebcam.getTagBySpecificID(20);
+        aprilTagWebcam.displayDetectionTelemetry(id22);
+
+        AprilTagDetection id23 = aprilTagWebcam.getTagBySpecificID(20);
+        aprilTagWebcam.displayDetectionTelemetry(id23);
+        //
+
+        //Red Side AprilTag ID
         AprilTagDetection id24 = aprilTagWebcam.getTagBySpecificID(24);
         aprilTagWebcam.displayDetectionTelemetry(id24);
-        telemetry.addData("id24 String", id24.toString());
     }
 }

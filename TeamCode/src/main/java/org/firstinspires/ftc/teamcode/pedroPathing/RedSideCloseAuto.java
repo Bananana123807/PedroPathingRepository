@@ -1,5 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
-
+//duv
 import android.util.Size;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
@@ -20,6 +20,9 @@ import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
+import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 
 @Autonomous(name = "RedSideCloseAuto", group = "Over-caffeinated")
 public class RedSideCloseAuto extends OpMode {
@@ -29,8 +32,10 @@ public class RedSideCloseAuto extends OpMode {
     int ballNum = 0;
     private Follower follower;
     private Timer pathTimer, ballTimer, pickTimer;
-    private DcMotor shooterMotor = null;
+    private DcMotorEx shooterMotor = null;
     private CRServo gate = null;
+    ElapsedTime timer = new ElapsedTime();
+
     private int pathState;
     private int counter = 0;
     private final Pose startPose = new Pose(0, 0, 0);
@@ -46,6 +51,20 @@ public class RedSideCloseAuto extends OpMode {
     private double waitTime = 0;
     private boolean isShooting = false;
     private String ballColor = "";
+    double kP=0;
+    double kI=0;
+    double kD=0;
+    double integralSum=0;
+    double lastError=0;
+    double currentVelocity=shooterMotor.getVelocity();
+    double currentRPM = (currentVelocity / 28.0) * 60.0;
+    double targetRPM=0;
+    double error=targetRPM-currentRPM;
+    double deltaTime = timer.seconds();
+    double derivative = (error - lastError) / deltaTime;
+    double output=0;
+
+
     DcMotor noodleIntake;
     Servo server;
     private PredominantColorProcessor colorSensor;
@@ -116,7 +135,22 @@ public class RedSideCloseAuto extends OpMode {
     public void autonomousPathUpdate(){
         switch (pathState) {
             case 1:
+
+                if (targetRPM+100>=targetRPM&&targetRPM<=targetRPM-100){
+                    targetRPM=2700;
+                    kP=0.0007;
+                    kI=0.0005;
+                    kD=0;
+                    error=targetRPM-currentRPM;
+                    deltaTime = timer.seconds();
+                    integralSum += error * deltaTime;
+                    output=(kP * error) + (kI * integralSum) + (kD * derivative);
+                    shooterMotor.setPower(targetRPM);
+
+
+                }
                 shooterMotor.setPower(shooterPower);
+                targetRPM=2700;
                 follower.followPath(scorePreload);
                 telemetry.addLine("Moving Back");
                 waitTime = 2000;
@@ -175,6 +209,22 @@ public class RedSideCloseAuto extends OpMode {
 
     @Override
     public void loop() {
+
+        double currentVelocity=shooterMotor.getVelocity();
+        double currentRPM = (currentVelocity / 28.0) * 60.0;
+        double targetRPM=0;
+        double error=targetRPM-currentRPM;
+        double deltaTime = timer.seconds();
+        integralSum += error * deltaTime;
+        double derivative = (error - lastError) / deltaTime;
+
+
+
+        lastError = error;
+        timer.reset();
+
+
+
         follower.update();
 
         double elapsedTime = pathTimer.getElapsedTime();
@@ -244,7 +294,7 @@ public class RedSideCloseAuto extends OpMode {
     @Override
     public void init(){
 
-        shooterMotor = hardwareMap.get(DcMotor.class, "shooterMotor");
+        shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
         gate = hardwareMap.get(CRServo.class, "gate");
         noodleIntake = hardwareMap.get(DcMotor.class, "intake");
         server = hardwareMap.get(Servo.class, "server");

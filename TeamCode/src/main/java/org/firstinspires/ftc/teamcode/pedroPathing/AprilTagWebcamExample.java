@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
-@Autonomous
 public class AprilTagWebcamExample extends OpMode {
 
     AprilTagDistanceAndID aprilTagWebcam = new AprilTagDistanceAndID();
@@ -36,5 +35,7 @@ public class AprilTagWebcamExample extends OpMode {
         //Red Side AprilTag ID
         AprilTagDetection id24 = aprilTagWebcam.getTagBySpecificID(24);
         aprilTagWebcam.displayDetectionTelemetry(id24);
+
+
     }
 }

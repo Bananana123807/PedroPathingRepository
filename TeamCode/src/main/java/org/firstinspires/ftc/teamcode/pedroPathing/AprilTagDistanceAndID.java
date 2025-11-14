@@ -55,6 +55,9 @@ public class AprilTagDistanceAndID {
             telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detectedID.ftcPose.x, detectedID.ftcPose.y, detectedID.ftcPose.z));
             telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detectedID.ftcPose.pitch, detectedID.ftcPose.roll, detectedID.ftcPose.yaw));
             telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detectedID.ftcPose.range, detectedID.ftcPose.bearing, detectedID.ftcPose.elevation));
+
+            telemetry.addLine("Range",detectedID.ftcPose.range);
+            telmetry.addLine("Distance using 3D Pythagorean Theorem rounded to the 1/10 of a cm", Math.sqrt(detectedID.ftcPose.x * detectedID.ftcPose.x + detectedID.ftcPose.y * detectedID.ftcPose.y + detectedID.ftcPose.z * detectedID.ftcPose.z ));
         } else {
             telemetry.addLine(String.format("\n==== (ID %d) Unknown", detectedID.id));
             telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detectedID.center.x, detectedID.center.y));

@@ -1,209 +1,327 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import android.util.Size;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
-import org.opencv.core.Mat;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.opencv.ImageRegion;
+import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "BlueSideCloseAuto", group = "Over-caffeinated")
 public class BlueSideCloseAuto extends OpMode {
 
-    private Path turnToClassifier;
+    // PID constants
+    private static final double SHOOTER_KP = 0.0007;
+    private static final double SHOOTER_KI = 0.0005;
+    private static final double SHOOTER_KD = 0.0;
+    private static final double TICKS_PER_REV = 28.0;
+    private static final double TARGET_RPM = 3100;
+    private static final double MAX_INTEGRAL = 500.0;
 
-    private double shooterPower = -0.55;
-    private double gatePower = -1;
+    private ElapsedTime timer = new ElapsedTime();
+    private double currentVelocity, currentRPM, error, lastError, integralSum, derivative, output, deltaTime;
+    private double lastTimestamp = 0.0;
+
+    // Servo positions
+    private static final double DEFAULT_GATE_POSITION = 0.4;
+    private static final double ACTIVE_GATE_POSITION = 0.85;
+
+    // Hardware
+    private DcMotorEx shooterMotor;
+    private CRServo gate;
+    private DcMotor noodleIntake;
+    private Servo server;
+    private PredominantColorProcessor colorSensor;
+
+    // Pathing
     private Follower follower;
-    private Timer pathTimer;
-    private DcMotorEx shooterMotor = null;
-    private CRServo gate = null;
-    private IMU imu = null;
+    private Timer pathTimer, ballTimer, pickTimer;
+    private int pathState = 0;
+    private int counter = 0;
+    private boolean isShooting = false;
+    private double waitTime = 0;
+    private String ballColor = "";
+    private int ballNum = 0;
 
-    private int pathState;
-    private final int TICKS_PER_REV = 28;
+    // -------- BLUE SIDE MIRRORED FIELD POSES --------
+    private final Pose startPose = new Pose(19.5, 119.6, Math.toRadians(144));
+    private final Pose retreatPose = computeRetreatPose(startPose, 30);
+    private final Pose behindBallsPose = new Pose(64, 77.5, Math.toRadians(180));
+    private final Pose ball1 = new Pose(39, 77.5, Math.toRadians(180));
+    private final Pose ball2 = new Pose(31, 77.5, Math.toRadians(180));
+    private final Pose ballSweepEndPose = new Pose(10, 77.5, Math.toRadians(180));
+    private final Pose scorePose = new Pose(44, 99, Math.toRadians(144));
+    private final Pose scoreControlPointPose = new Pose(30, 102);
+    private final Pose exitStartPose = new Pose(44, 99, Math.toRadians(180));
+    private final Pose exitPose = new Pose(24, 80, Math.toRadians(180));
 
-    private double TARGET_RPM = 2900;
-    private double currentRPM = 0;
+    // Path objects
+    private Path scorePreload, driveToBalls, toBall1, toBall2, ballSweep;
+    private PathChain scoreAllBalls, moveOut;
 
-    private double kP = 0.005;
-    private double kI = 0.00008;
-    private double kD = 0;
 
-    private double previousError = 0;
-    private double integral = 0;
-    private int counter = -1;
-    private double output = 0;
+    // Compute backwards retreat relative to heading
+    private Pose computeRetreatPose(Pose origin, double distanceInches) {
+        double heading = origin.getHeading();
+        double dx = -distanceInches * Math.cos(heading);
+        double dy = -distanceInches * Math.sin(heading);
+        return new Pose(origin.getX() + dx, origin.getY() + dy, heading);
+    }
 
-    private Pose startPose;
-    private Pose backwardPose;
-    private Pose exitPose;
-
-    private Path moveBackward;
-    private PathChain moveOut;
-
-    private double waitTime = 2000;
-
+    // Build all driving paths
     public void buildPaths() {
-        moveBackward = new Path(new BezierLine(startPose, backwardPose));
-        moveBackward.setLinearHeadingInterpolation(startPose.getHeading(), backwardPose.getHeading());
+        scorePreload = new Path(new BezierLine(startPose, retreatPose));
+        scorePreload.setConstantHeadingInterpolation(Math.toRadians(144));
+
+        driveToBalls = new Path(new BezierLine(retreatPose, behindBallsPose));
+        driveToBalls.setConstantHeadingInterpolation(Math.toRadians(180));
+
+        toBall1 = new Path(new BezierLine(behindBallsPose, ball1));
+        toBall1.setConstantHeadingInterpolation(Math.toRadians(180));
+
+        toBall2 = new Path(new BezierLine(ball1, ball2));
+        toBall2.setConstantHeadingInterpolation(Math.toRadians(180));
+
+        ballSweep = new Path(new BezierLine(behindBallsPose, ballSweepEndPose));
+        ballSweep.setConstantHeadingInterpolation(Math.toRadians(180));
+
+        scoreAllBalls = follower.pathBuilder()
+                .addPath(new BezierCurve(ballSweepEndPose, scoreControlPointPose, scorePose))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(144))
+                .build();
 
         moveOut = follower.pathBuilder()
-                .addPath(new BezierLine(backwardPose, exitPose))
-                .setLinearHeadingInterpolation(backwardPose.getHeading(), Math.toRadians(45))
+                .addPath(new BezierLine(exitStartPose, exitPose))
+                .setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(180))
                 .build();
     }
+
 
     public void setPathState(int pState) {
         pathState = pState;
         pathTimer.resetTimer();
     }
 
+
+    public void shootBall() {
+        if (!isShooting) {
+            ballNum++;
+            gate.setPower(1);
+            ballTimer.resetTimer();
+            isShooting = true;
+        }
+
+        double elapsed = ballTimer.getElapsedTime();
+
+        if (elapsed >= 500 && elapsed < 1000) {
+            gate.setPower(-1);
+        } else if (elapsed >= 1300) {
+            gate.setPower(0);
+            isShooting = false;
+        }
+    }
+
+
+    public void updateShooterPID() {
+        currentVelocity = shooterMotor.getVelocity();
+        currentRPM = (currentVelocity / TICKS_PER_REV) * 60.0;
+
+        error = TARGET_RPM - currentRPM;
+
+        double currentTime = timer.seconds();
+        deltaTime = currentTime - lastTimestamp;
+        lastTimestamp = currentTime;
+
+        if (deltaTime <= 0) return;
+
+        integralSum += error * deltaTime;
+        integralSum = Math.max(Math.min(integralSum, MAX_INTEGRAL), -MAX_INTEGRAL);
+
+        derivative = (error - lastError) / deltaTime;
+
+        output = (SHOOTER_KP * error) + (SHOOTER_KI * integralSum) + (SHOOTER_KD * derivative);
+        output = Math.max(Math.min(output, 1.0), -1.0);
+
+        shooterMotor.setPower(output);
+        lastError = error;
+    }
+
+
     public void autonomousPathUpdate() {
         switch (pathState) {
-            case 0:
-                follower.followPath(moveBackward);
-                telemetry.addLine("Backing up");
+            case 1:
+                follower.setMaxPower(1);
+                updateShooterPID();
+                follower.followPath(scorePreload);
+                telemetry.addLine("Backing up to shoot preload");
                 waitTime = 2000;
                 break;
-            case 1:
-                gate.setPower(1);
-                waitTime = 1500;
-                break;
-            case 2:
-                shooterMotor.setPower(output);
-                gate.setPower(gatePower);
-                waitTime = 500;
-                break;
-            case 3:
-                gate.setPower(1);
-                waitTime = 1500;
-                break;
-            case 4:
-                gate.setPower(gatePower);
-                waitTime = 500;
+            case 2: case 3: case 4:
+                shootBall();
+                waitTime = 100;
                 break;
             case 5:
-                gate.setPower(1);
+                follower.followPath(driveToBalls);
+                telemetry.addLine("Driving to ball sweep start");
                 waitTime = 1500;
                 break;
             case 6:
-                gate.setPower(gatePower);
-                waitTime = 500;
+                follower.setMaxPower(0.5);
+                follower.followPath(toBall1);
+                telemetry.addLine("Driving to Ball 1");
+                waitTime = 2000;
                 break;
             case 7:
-                gate.setPower(0);
-                TARGET_RPM = 00;
-                waitTime = 500;
+                follower.followPath(toBall2);
+                telemetry.addLine("Driving to Ball 2");
+                waitTime = 2000;
                 break;
             case 8:
+                follower.followPath(ballSweep);
+                telemetry.addLine("Sweeping through balls");
+                waitTime = 3000;
+                break;
+            case 9:
+                follower.setMaxPower(1);
+                follower.followPath(scoreAllBalls);
+                telemetry.addLine("Returning to score");
+                waitTime = 1500;
+                break;
+            case 10: case 11: case 12:
+                shootBall();
+                waitTime = 100;
+                break;
+            case 13:
                 follower.followPath(moveOut);
-                telemetry.addLine("Exiting Zone");
-                waitTime = 2000;
+                telemetry.addLine("Moving out");
+                waitTime = 1000;
+                break;
+            case 14:
+                gate.setPower(0);
+                shooterMotor.setPower(0);
+                noodleIntake.setPower(0);
+                telemetry.addLine("Auto Complete");
                 break;
         }
     }
 
+
     @Override
     public void loop() {
-        if (pathState == 9 && turnToClassifier != null) {
-            follower.followPath(turnToClassifier);
-        }
-
-        double targetTicksPerSec = (TARGET_RPM / 60.0) * TICKS_PER_REV;
-        double currentTicksPerSec = shooterMotor.getVelocity();
-        currentRPM = (currentTicksPerSec / TICKS_PER_REV) * 60.0;
-
-        double error = targetTicksPerSec - currentTicksPerSec;
-        integral += error * 0.05;
-        double derivative = (error - previousError) / 0.05;
-
-        output = (kP * error) + (kI * integral) + (kD * derivative);
-        output = Math.max(0, Math.min(1, output));
-        previousError = error;
-
+        updateShooterPID();
         follower.update();
 
         double elapsedTime = pathTimer.getElapsedTime();
-        shooterMotor.setPower(output);
+        double elapsedPickTime = pickTimer.getElapsedTime();
 
-        if (elapsedTime >= waitTime) {
+        PredominantColorProcessor.Result result = colorSensor.getAnalysis();
+        if (result == null) {
+            telemetry.addLine("Waiting for camera...");
+            return;
+        }
+
+        if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_GREEN) {
+            ballColor = "Green";
+        } else if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_PURPLE) {
+            ballColor = "Purple";
+        } else {
+            ballColor = "None";
+        }
+
+        if ((ballColor.equals("Purple") || ballColor.equals("Green"))) {
+            if(elapsedPickTime > 50) {
+                server.setPosition(ACTIVE_GATE_POSITION);
+                ballColor = "No Ball Detected";
+            }
+        } else {
+            server.setPosition(DEFAULT_GATE_POSITION);
+            pickTimer.resetTimer();
+        }
+
+        if (isShooting) shootBall();
+
+        if (elapsedTime >= waitTime && !isShooting) {
             counter += 1;
             setPathState(counter);
             autonomousPathUpdate();
         }
 
-        telemetry.addData("path state", pathState);
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading (rad)", follower.getPose().getHeading());
+        telemetry.addData("Color Detected", ballColor);
+        telemetry.addData("Best Match", result.closestSwatch);
+        telemetry.addData("Path State", pathState);
+        telemetry.addData("X", follower.getPose().getX());
+        telemetry.addData("Y", follower.getPose().getY());
+        telemetry.addData("Heading", follower.getPose().getHeading());
         telemetry.addData("Shooter Power", shooterMotor.getPower());
-        telemetry.addData("Shooter RPM", "%.1f", currentRPM);
-        telemetry.addData("Target RPM", "%.1f", TARGET_RPM);
-        telemetry.addData("Shooter TPS", "%.1f", currentTicksPerSec);
-        telemetry.addData("Output (PID)", "%.3f", output);
+        telemetry.addData("Shooter RPM", currentRPM);
+        telemetry.addData("Shooting Ball Number", ballNum);
         telemetry.update();
     }
+
+
+    @Override
+    public void start() {
+        pathTimer.resetTimer();
+        noodleIntake.setPower(-0.67);
+    }
+
 
     @Override
     public void init() {
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
+        shooterMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
         gate = hardwareMap.get(CRServo.class, "gate");
-        imu = hardwareMap.get(IMU.class, "imu");
+        noodleIntake = hardwareMap.get(DcMotor.class, "intake");
+        server = hardwareMap.get(Servo.class, "server");
 
-        IMU.Parameters parameters = new IMU.Parameters(
-                new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                        RevHubOrientationOnRobot.UsbFacingDirection.UP
+        colorSensor = new PredominantColorProcessor.Builder()
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-0.1, 0.1, 0.1, -0.1))
+                .setSwatches(
+                        PredominantColorProcessor.Swatch.ARTIFACT_GREEN,
+                        PredominantColorProcessor.Swatch.ARTIFACT_PURPLE,
+                        PredominantColorProcessor.Swatch.BLACK,
+                        PredominantColorProcessor.Swatch.WHITE
                 )
-        );
-        imu.initialize(parameters);
+                .build();
 
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        VisionPortal portal = new VisionPortal.Builder()
+                .addProcessor(colorSensor)
+                .setCameraResolution(new Size(320, 240))
+                .setCamera(hardwareMap.get(WebcamName.class, "Camera"))
+                .build();
 
-        double imuHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-        imuHeading -= Math.PI / 2; // 90° counterclockwise turn for blue side
-        telemetry.addData("IMU Initial Heading (rad)", imuHeading);
-
-        startPose = new Pose(0, 0, imuHeading);
-
-        double backX = -20 * Math.cos(imuHeading);
-        double backY = -20 * Math.sin(imuHeading);
-        backwardPose = new Pose(backX, backY, imuHeading);
-
-        double strafeDistance = 15;
-        double strafeX = backwardPose.getX() - strafeDistance * Math.cos(imuHeading - Math.PI / 2);
-        double strafeY = backwardPose.getY() - strafeDistance * Math.sin(imuHeading - Math.PI / 2);
-        exitPose = new Pose(strafeX, strafeY + 5, imuHeading);
+        telemetry.setMsTransmissionInterval(100);
+        telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
 
         pathTimer = new Timer();
-        pathTimer.resetTimer();
+        ballTimer = new Timer();
+        pickTimer = new Timer();
 
-        setPathState(0);
+        pathTimer.resetTimer();
+        ballTimer.resetTimer();
+        pickTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
+
         buildPaths();
-
-        shooterMotor.setDirection(DcMotorEx.Direction.REVERSE);
-        shooterMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        shooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooterMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
         telemetry.update();
     }
 }

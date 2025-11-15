@@ -61,6 +61,7 @@ public class PewPewTeleOP extends LinearOpMode {
         rightBack.setDirection(DcMotor.Direction.REVERSE);
         leftBack.setDirection(DcMotor.Direction.REVERSE);
         leftFront.setDirection(DcMotor.Direction.REVERSE);
+        shooterMotor.setDirection(DcMotor.Direction.REVERSE);
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -83,9 +84,6 @@ public class PewPewTeleOP extends LinearOpMode {
                 .setSwatches(
                         PredominantColorProcessor.Swatch.ARTIFACT_GREEN,
                         PredominantColorProcessor.Swatch.ARTIFACT_PURPLE,
-                        PredominantColorProcessor.Swatch.RED,
-                        PredominantColorProcessor.Swatch.BLUE,
-                        PredominantColorProcessor.Swatch.YELLOW,
                         PredominantColorProcessor.Swatch.BLACK,
                         PredominantColorProcessor.Swatch.WHITE
                 )
@@ -143,11 +141,17 @@ public class PewPewTeleOP extends LinearOpMode {
             frontRightPower = (rotY - rotX - rx) / denominator;
             backRightPower = (rotY + rotX - rx) / denominator;
 
-            leftFront.setPower(frontLeftPower);
-            leftBack.setPower(backLeftPower);
-            rightFront.setPower(frontRightPower);
-            rightBack.setPower(backRightPower);
-
+            if (gamepad1.right_trigger > 0.8){
+                leftFront.setPower(frontLeftPower/2);
+                leftBack.setPower(backLeftPower/2);
+                rightFront.setPower(frontRightPower/2);
+                rightBack.setPower(backRightPower/2);
+            } else {
+                leftFront.setPower(frontLeftPower);
+                leftBack.setPower(backLeftPower);
+                rightFront.setPower(frontRightPower);
+                rightBack.setPower(backRightPower);
+            }
             if (gamepad2.right_trigger == 1) gate.setPower(-1);
             else if (gamepad2.left_trigger == 1) gate.setPower(1);
             else gate.setPower(0);
@@ -171,7 +175,7 @@ public class PewPewTeleOP extends LinearOpMode {
             lastError = error;
             timer.reset();
 
-            if (gamepad2.left_bumper) noodleIntake.setPower(-0.75);
+            if (gamepad2.left_bumper) noodleIntake.setPower(-0.65);//0.65 before
             else if (gamepad2.right_bumper) noodleIntake.setPower(0);
 
             if (gamepad2.dpad_down || gamepad2.dpad_up) mode = 1;

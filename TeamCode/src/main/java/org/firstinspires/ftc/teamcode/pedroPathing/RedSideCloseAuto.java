@@ -67,8 +67,8 @@ public class RedSideCloseAuto extends OpMode {
     private final Pose startPose = new Pose(124.5, 119.6, Math.toRadians(36));
     private final Pose retreatPose = computeRetreatPose(startPose, 30);
     private final Pose behindBallsPose = new Pose(80, 81.5, Math.toRadians(0));
-    private final Pose ball1 = new Pose(105, 81.5, Math.toRadians(0));
-    private final Pose ball2 = new Pose(113, 81.5, Math.toRadians(0));
+    private final Pose ball1 = new Pose(103, 81.5, Math.toRadians(0));
+    private final Pose ball2 = new Pose(112.8, 81.5, Math.toRadians(0));
     private final Pose ballSweepEndPose = new Pose(134, 81.5, Math.toRadians(0));
     private final Pose scorePose = new Pose(100, 99, Math.toRadians(36));
     private final Pose scoreControlPointPose = new Pose(114, 102);

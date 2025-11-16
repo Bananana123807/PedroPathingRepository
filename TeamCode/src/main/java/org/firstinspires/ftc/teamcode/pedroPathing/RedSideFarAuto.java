@@ -31,7 +31,7 @@ public class RedSideFarAuto extends OpMode {
     private static final double SHOOTER_KI = 0.0005;
     private static final double SHOOTER_KD = 0.0;
     private static final double TICKS_PER_REV = 28.0;
-    private static final double TARGET_RPM = 5400;
+    private static final double TARGET_RPM = 5160;
     private static final double MAX_INTEGRAL = 500.0; // anti-windup clamp
     private ElapsedTime timer = new ElapsedTime();
     private double currentVelocity, currentRPM, error, lastError, integralSum, derivative, output, deltaTime;
@@ -65,7 +65,7 @@ public class RedSideFarAuto extends OpMode {
 
     // Poses
     private final Pose startPose = new Pose(88, 3, Math.toRadians(90));
-    private final Pose scorePose = new Pose(83.952, 14.2292, Math.toRadians(76));
+    private final Pose scorePose = new Pose(83.952, 14.2292, Math.toRadians(66));
     private final Pose outPose = new Pose(135,23, Math.toRadians(0));
 
     // Paths
@@ -74,10 +74,10 @@ public class RedSideFarAuto extends OpMode {
 
     public void buildPaths() {
         scorePath = new Path(new BezierLine(startPose, scorePose));
-        scorePath.setConstantHeadingInterpolation(Math.toRadians(69));
+        scorePath.setConstantHeadingInterpolation(scorePose.getHeading());
 
         outPath = new Path(new BezierLine(scorePose, outPose));
-        outPath.setConstantHeadingInterpolation(Math.toRadians(0));
+        outPath.setConstantHeadingInterpolation(outPose.getHeading());
 
     }
 
@@ -87,7 +87,7 @@ public class RedSideFarAuto extends OpMode {
     }
 
     public void shootBall() {
-        if (isShooting == false) {
+        if (!isShooting) {
             ballNum++;
             gate.setPower(1);
             ballTimer.resetTimer();
@@ -96,7 +96,7 @@ public class RedSideFarAuto extends OpMode {
 
         double elapsed = ballTimer.getElapsedTime();
 
-        if (elapsed >= 700 && elapsed < 1200) {
+        if (elapsed >= 900 && elapsed < 1400) {
             gate.setPower(-1);
         } else if (elapsed >= 1300) {
             gate.setPower(0);
@@ -144,7 +144,7 @@ public class RedSideFarAuto extends OpMode {
                 break;
             case 2: case 3: case 4:
                 shootBall();
-                waitTime = 500;
+                waitTime = 3000;
                 break;
             case 5:
                 follower.followPath(outPath);

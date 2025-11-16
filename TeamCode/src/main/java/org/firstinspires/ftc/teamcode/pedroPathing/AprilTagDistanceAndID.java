@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 import android.util.Size;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -11,9 +10,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-
 import java.util.ArrayList;
-@Autonomous
+
 public class AprilTagDistanceAndID {
 
     private AprilTagProcessor aprilTagProcessor;
@@ -33,7 +31,7 @@ public class AprilTagDistanceAndID {
                 .build();
 
         VisionPortal.Builder builder = new VisionPortal.Builder();
-        builder.setCamera(hwMap.get(WebcamName.class, "Camera")); // webcam name in RC config
+        builder.setCamera(hwMap.get(WebcamName.class, "Camera"));
         builder.setCameraResolution(new Size(640, 480));
         builder.addProcessor(aprilTagProcessor);
 
@@ -49,15 +47,15 @@ public class AprilTagDistanceAndID {
     }
 
     public void displayDetectionTelemetry(AprilTagDetection detectedID){
-        if (detection == null) {return;}
+        if (detectedID == null) {return;}
         if (detectedID.metadata != null) {
             telemetry.addLine(String.format("\n==== (ID %d) %s", detectedID.id, detectedID.metadata.name));
             telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detectedID.ftcPose.x, detectedID.ftcPose.y, detectedID.ftcPose.z));
             telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detectedID.ftcPose.pitch, detectedID.ftcPose.roll, detectedID.ftcPose.yaw));
             telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detectedID.ftcPose.range, detectedID.ftcPose.bearing, detectedID.ftcPose.elevation));
 
-            telemetry.addLine("Range",detectedID.ftcPose.range);
-            telmetry.addLine("Distance using 3D Pythagorean Theorem rounded to the 1/10 of a cm", Math.sqrt(detectedID.ftcPose.x * detectedID.ftcPose.x + detectedID.ftcPose.y * detectedID.ftcPose.y + detectedID.ftcPose.z * detectedID.ftcPose.z ));
+            telemetry.addData("Range", detectedID.ftcPose.range);
+            telemetry.addData("Distance using 3D Pythagorean Theorem rounded to the 1/10 of a cm", Math.sqrt(detectedID.ftcPose.x * detectedID.ftcPose.x + detectedID.ftcPose.y * detectedID.ftcPose.y + detectedID.ftcPose.z * detectedID.ftcPose.z ));
         } else {
             telemetry.addLine(String.format("\n==== (ID %d) Unknown", detectedID.id));
             telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detectedID.center.x, detectedID.center.y));

@@ -175,7 +175,7 @@ public class PewPewTeleOP extends LinearOpMode {
             lastError = error;
             timer.reset();
 
-            if (gamepad2.left_bumper) noodleIntake.setPower(-0.65);//0.65 before
+            if (gamepad2.left_bumper) noodleIntake.setPower(-0.75);//0.65 before
             else if (gamepad2.right_bumper) noodleIntake.setPower(0);
 
             if (gamepad2.dpad_down || gamepad2.dpad_up) mode = 1;

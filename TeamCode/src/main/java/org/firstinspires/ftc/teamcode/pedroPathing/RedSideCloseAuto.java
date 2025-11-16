@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import android.util.Size;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -12,6 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -19,68 +21,107 @@ import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "RedSideCloseAuto2", group = "Over-caffeinated")
+@Autonomous(name = "RedSideCloseAuto", group = "Over-caffeinated")
 public class RedSideCloseAuto extends OpMode {
 
-    private double shooterPower = -0.55;
-    private double gatePower = -1;
-    int ballNum = 0;
-    private Follower follower;
-    private Timer pathTimer, ballTimer, pickTimer;
-    private DcMotor shooterMotor = null;
-    private CRServo gate = null;
-    private int pathState;
-    private int counter = 0;
-    private final Pose startPose = new Pose(0, 0, 0);
-    private final Pose scorePose = new Pose(-30, 0);
-    private final Pose setOne = new Pose(-40, -10);
-    private final Pose ball1Pose = new Pose(-40, -15);
-    private final Pose ball2Pose = new Pose(-40, -20);
-    private final Pose ball3Pose = new Pose(-40, -25);
-    private final Pose moveOutPose = new Pose(-30, -15);
-    private Path scorePreload;
-    private PathChain setOnePath, ball1, ball2, ball3, moveOut, scoreSet1;
-    private double waitTime = 0;
-    private boolean isShooting = false;
-    private String ballColor = "";
-    DcMotor noodleIntake;
-    Servo server;
+    // PID constants
+    private static final double SHOOTER_KP = 0.0007;
+    private static final double SHOOTER_KI = 0.0005;
+    private static final double SHOOTER_KD = 0.0;
+    private static final double TICKS_PER_REV = 28.0;
+    private static final double TARGET_RPM = 3100;
+    private static final double MAX_INTEGRAL = 500.0; // anti-windup clamp
+    private ElapsedTime timer = new ElapsedTime();
+    private double currentVelocity, currentRPM, error, lastError, integralSum, derivative, output, deltaTime;
+    private double lastTimestamp = 0.0;
+
+    // Servo positions
+    private static final double DEFAULT_GATE_POSITION = 0.4;
+    private static final double ACTIVE_GATE_POSITION = 0.85;
+
+
+
+    // Hardware
+    private DcMotorEx shooterMotor;
+    private CRServo gate;
+    private DcMotor noodleIntake;
+    private Servo server;
     private PredominantColorProcessor colorSensor;
 
+    // Pathing
+    private Follower follower;
+    private Timer pathTimer, ballTimer, pickTimer;
+    private int pathState = 0;
+    private int counter = 0;
+    private boolean isShooting = false;
+    private double waitTime = 0;
+    private String ballColor = "";
+    private int ballNum = 0;
+
+    // PID variables
+    //private double currentVelocity, currentRPM, error, lastError, integralSum, derivative, output, deltaTime;
+
+    // Poses
+    private final Pose startPose = new Pose(124.5, 119.6, Math.toRadians(36));
+    private final Pose retreatPose = computeRetreatPose(startPose, 30);
+    private final Pose behindBallsPose = new Pose(80, 81.5, Math.toRadians(0));
+    private final Pose ball1 = new Pose(103, 81.5, Math.toRadians(0));
+    private final Pose ball2 = new Pose(112.8, 81.5, Math.toRadians(0));
+    private final Pose ballSweepEndPose = new Pose(134, 81.5, Math.toRadians(0));
+    private final Pose scorePose = new Pose(100, 99, Math.toRadians(36));
+    private final Pose scoreControlPointPose = new Pose(114, 102);
+    private final Pose exitStartPose = new Pose(100, 99, Math.toRadians(0));
+    private final Pose exitPose = new Pose(120, 80, Math.toRadians(0));
+
+    // Paths
+    private Path scorePreload, driveToBalls, toBall1, toBall2, ballSweep;
+    private PathChain scoreAllBalls, moveOut;
+
+    private Pose computeRetreatPose(Pose origin, double distanceInches) {
+        double heading = origin.getHeading();
+        double dx = -distanceInches * Math.cos(heading);
+        double dy = -distanceInches * Math.sin(heading);
+        return new Pose(origin.getX() + dx, origin.getY() + dy, heading);
+    }
+
+
     public void buildPaths() {
-        scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setConstantHeadingInterpolation(Math.toRadians(0));
+        // Step 1: Backward retreat
+        scorePreload = new Path(new BezierLine(startPose, retreatPose));
+        scorePreload.setConstantHeadingInterpolation(Math.toRadians(36));
 
-        setOnePath = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, setOne))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-36))
+// Step 2: Turn to 0° and drive behind balls
+        driveToBalls = new Path(new BezierLine(retreatPose, behindBallsPose));
+        driveToBalls.setConstantHeadingInterpolation(Math.toRadians(0));
+
+        toBall1 = new Path(new BezierLine(behindBallsPose, ball1));
+        toBall1.setConstantHeadingInterpolation(Math.toRadians(0));
+
+        toBall2 = new Path(new BezierLine(ball1, ball2));
+        toBall2.setConstantHeadingInterpolation(Math.toRadians(0));
+
+// Step 3: Drive forward into balls
+
+        ballSweep = new Path(new BezierLine(behindBallsPose, ballSweepEndPose));
+//        ballSweep.setVelocityMultiplier(0.3);
+//        ballSweep.setAccelerationMultiplier(0.3);
+        ballSweep.setConstantHeadingInterpolation(Math.toRadians(0));
+
+
+// Step 4: Return to score at 36°
+        scoreAllBalls = follower.pathBuilder()
+                .addPath(new BezierCurve(ballSweepEndPose, scoreControlPointPose, scorePose))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(36))
                 .build();
 
-        ball1 = follower.pathBuilder()
-                .addPath(new BezierLine(setOne, ball1Pose))
-                .setConstantHeadingInterpolation(Math.toRadians(-36))
-                .build();
-
-        ball2 = follower.pathBuilder()
-                .addPath(new BezierLine(ball1Pose, ball2Pose))
-                .setConstantHeadingInterpolation(Math.toRadians(-36))
-                .build();
-
-        ball3 = follower.pathBuilder()
-                .addPath(new BezierLine(ball2Pose, ball3Pose))
-                .setConstantHeadingInterpolation(Math.toRadians(-36))
-                .build();
-
-        scoreSet1 = follower.pathBuilder()
-                .addPath(new BezierLine(ball3Pose, scorePose))
-                .setLinearHeadingInterpolation(Math.toRadians(-36), Math.toRadians(0))
-                .build();
-
+// Step 5: Turn to 0° and strafe vertically out
         moveOut = follower.pathBuilder()
-                .addPath(new BezierLine(scorePose, moveOutPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
+                .addPath(new BezierLine(exitStartPose, exitPose))
+                .setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(0))
                 .build();
+
     }
 
     public void setPathState(int pState) {
@@ -98,59 +139,92 @@ public class RedSideCloseAuto extends OpMode {
 
         double elapsed = ballTimer.getElapsedTime();
 
-        if (elapsed >= 1000 && elapsed < 1500) {
-            gate.setPower(gatePower);
-        } else if (elapsed >= 1500) {
+        if (elapsed >= 500 && elapsed < 1000) {
+            gate.setPower(-1);
+        } else if (elapsed >= 1300) {
             gate.setPower(0);
             isShooting = false;
         }
     }
 
-    public void autonomousPathUpdate(){
+    public void updateShooterPID() {
+        currentVelocity = shooterMotor.getVelocity();
+        currentRPM = (currentVelocity / TICKS_PER_REV) * 60.0;
+
+        error = TARGET_RPM - currentRPM;
+
+        double currentTime = timer.seconds();
+        deltaTime = currentTime - lastTimestamp;
+        lastTimestamp = currentTime;
+
+        if (deltaTime <= 0) return; // protect against divide-by-zero
+
+        // Integral with anti-windup
+        integralSum += error * deltaTime;
+        integralSum = Math.max(Math.min(integralSum, MAX_INTEGRAL), -MAX_INTEGRAL);
+
+        // Derivative
+        derivative = (error - lastError) / deltaTime;
+
+        // PID output
+        output = (SHOOTER_KP * error) + (SHOOTER_KI * integralSum) + (SHOOTER_KD * derivative);
+
+        // Clamp to motor power range
+        output = Math.max(Math.min(output, 1.0), -1.0);
+
+        shooterMotor.setPower(output);
+
+        lastError = error;
+    }
+
+    public void autonomousPathUpdate() {
         switch (pathState) {
             case 1:
-                shooterMotor.setPower(shooterPower);
+                follower.setMaxPower(1);
+                updateShooterPID();
                 follower.followPath(scorePreload);
-                telemetry.addLine("Moving Back");
+                telemetry.addLine("Backing up to shoot preload");
                 waitTime = 2000;
                 break;
-            case 2:
-            case 3:
-            case 4:
-            case 10:
-            case 11:
-            case 12:
+            case 2: case 3: case 4:
                 shootBall();
                 waitTime = 100;
                 break;
             case 5:
-                follower.followPath(setOnePath);
-                telemetry.addLine("PickupPose");
+                follower.followPath(driveToBalls);
+                telemetry.addLine("Driving to ball sweep start");
                 waitTime = 1500;
                 break;
             case 6:
-                follower.followPath(ball1);
-                telemetry.addLine("Picking ball 1");
-                waitTime = 1500;
+                follower.setMaxPower(0.5);
+                follower.followPath(toBall1);
+                telemetry.addLine("Driving to Ball 1");
+                waitTime = 2000;
                 break;
             case 7:
-                follower.followPath(ball2);
-                telemetry.addLine("Picking ball 2");
-                waitTime = 1500;
+                follower.followPath(toBall2);
+                telemetry.addLine("Driving to Ball 2");
+                waitTime = 2000;
                 break;
             case 8:
-                follower.followPath(ball3);
-                telemetry.addLine("Picking ball 3");
-                waitTime = 1500;
+                follower.followPath(ballSweep);
+                telemetry.addLine("Sweeping through balls slowly");
+                waitTime = 3000;
                 break;
             case 9:
-                follower.followPath(scoreSet1);
-                telemetry.addLine("Scoring");
+                follower.setMaxPower(1);
+                follower.followPath(scoreAllBalls);
+                telemetry.addLine("Returning to score");
                 waitTime = 1500;
+                break;
+            case 10: case 11: case 12:
+                shootBall();
+                waitTime = 100;
                 break;
             case 13:
                 follower.followPath(moveOut);
-                telemetry.addLine("Moving Out");
+                telemetry.addLine("Moving out");
+                waitTime = 1000;
                 break;
             case 14:
                 gate.setPower(0);
@@ -163,14 +237,13 @@ public class RedSideCloseAuto extends OpMode {
 
     @Override
     public void loop() {
+        updateShooterPID();
         follower.update();
 
         double elapsedTime = pathTimer.getElapsedTime();
         double elapsedPickTime = pickTimer.getElapsedTime();
-        telemetry.addLine("Preview on/off: 3 dots, Camera Stream\n");
 
         PredominantColorProcessor.Result result = colorSensor.getAnalysis();
-
         if (result == null) {
             telemetry.addLine("Waiting for camera...");
             return;
@@ -178,22 +251,20 @@ public class RedSideCloseAuto extends OpMode {
 
         if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_GREEN) {
             ballColor = "Green";
-            telemetry.addData("Color Detected:", ballColor);
-        }
-
-        if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_PURPLE) {
+        } else if (result.closestSwatch == PredominantColorProcessor.Swatch.ARTIFACT_PURPLE) {
             ballColor = "Purple";
-            telemetry.addData("Color Detected:", ballColor);
+        } else {
+            ballColor = "None";
         }
 
-        if (ballColor.equals("Green") || ballColor.equals("Purple")){
-            if (elapsedPickTime > 500){
-                server.setPosition(0.85);
+        if ((ballColor.equals("Purple") || ballColor.equals("Green"))) {
+            if(elapsedPickTime > 50) {
+                server.setPosition(ACTIVE_GATE_POSITION);
                 ballColor = "No Ball Detected";
-                pickTimer.resetTimer();
             }
         } else {
-            server.setPosition(0.4);
+            server.setPosition(DEFAULT_GATE_POSITION);
+            pickTimer.resetTimer();
         }
 
         if (isShooting) {
@@ -206,33 +277,29 @@ public class RedSideCloseAuto extends OpMode {
             autonomousPathUpdate();
         }
 
+        telemetry.addData("Color Detected", ballColor);
         telemetry.addData("Best Match", result.closestSwatch);
-        telemetry.addLine(String.format("RGB   (%3d, %3d, %3d)",
-                result.RGB[0], result.RGB[1], result.RGB[2]));
-        telemetry.addLine(String.format("HSV   (%3d, %3d, %3d)",
-                result.HSV[0], result.HSV[1], result.HSV[2]));
-        telemetry.addLine(String.format("YCrCb (%3d, %3d, %3d)",
-                result.YCrCb[0], result.YCrCb[1], result.YCrCb[2]));
-        telemetry.addData("path state", pathState);
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.addData("Path State", pathState);
+        telemetry.addData("X", follower.getPose().getX());
+        telemetry.addData("Y", follower.getPose().getY());
+        telemetry.addData("Heading", follower.getPose().getHeading());
         telemetry.addData("Shooter Power", shooterMotor.getPower());
-        telemetry.addData("Shooting Ball Number: ", ballNum);
+        telemetry.addData("Shooter RPM", currentRPM);
+        telemetry.addData("Shooting Ball Number", ballNum);
         telemetry.update();
     }
 
     @Override
     public void start() {
         pathTimer.resetTimer();
-        noodleIntake.setPower(-0.67);
+        noodleIntake.setPower(-0.67); // Intake always on for forklift assist
     }
 
-
     @Override
-    public void init(){
+    public void init() {
+        shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
+        shooterMotor.setDirection(DcMotorSimple.Direction.REVERSE); // Reverse shooter motor
 
-        shooterMotor = hardwareMap.get(DcMotor.class, "shooterMotor");
         gate = hardwareMap.get(CRServo.class, "gate");
         noodleIntake = hardwareMap.get(DcMotor.class, "intake");
         server = hardwareMap.get(Servo.class, "server");
@@ -242,9 +309,6 @@ public class RedSideCloseAuto extends OpMode {
                 .setSwatches(
                         PredominantColorProcessor.Swatch.ARTIFACT_GREEN,
                         PredominantColorProcessor.Swatch.ARTIFACT_PURPLE,
-                        PredominantColorProcessor.Swatch.RED,
-                        PredominantColorProcessor.Swatch.BLUE,
-                        PredominantColorProcessor.Swatch.YELLOW,
                         PredominantColorProcessor.Swatch.BLACK,
                         PredominantColorProcessor.Swatch.WHITE
                 )
@@ -260,18 +324,17 @@ public class RedSideCloseAuto extends OpMode {
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
 
         pathTimer = new Timer();
-        pathTimer.resetTimer();
-
         ballTimer = new Timer();
-        ballTimer.resetTimer();
-
         pickTimer = new Timer();
+
+        pathTimer.resetTimer();
+        ballTimer.resetTimer();
         pickTimer.resetTimer();
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
-        buildPaths();
 
+        buildPaths();
         telemetry.update();
     }
 }

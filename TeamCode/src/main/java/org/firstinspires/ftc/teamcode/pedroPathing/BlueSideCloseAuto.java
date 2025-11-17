@@ -58,8 +58,6 @@ public class BlueSideCloseAuto extends OpMode {
     private double waitTime = 0;
     private String ballColor = "";
     private int ballNum = 0;
-
-    // -------- BLUE SIDE MIRRORED FIELD POSES --------
     private final Pose startPose = new Pose(19.5, 119.6, Math.toRadians(144));
     private final Pose retreatPose = computeRetreatPose(startPose, 30);
     private final Pose behindBallsPose = new Pose(64, 77.5, Math.toRadians(180));

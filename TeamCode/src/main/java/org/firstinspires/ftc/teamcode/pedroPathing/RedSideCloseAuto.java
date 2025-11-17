@@ -258,7 +258,7 @@ public class RedSideCloseAuto extends OpMode {
         }
 
         if ((ballColor.equals("Purple") || ballColor.equals("Green"))) {
-            if(elapsedPickTime > 50) {
+            if (elapsedPickTime > 50) {
                 server.setPosition(ACTIVE_GATE_POSITION);
                 ballColor = "No Ball Detected";
             }

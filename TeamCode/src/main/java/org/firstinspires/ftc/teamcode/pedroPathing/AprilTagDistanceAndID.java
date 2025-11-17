@@ -15,7 +15,6 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import java.util.ArrayList;
 @Autonomous
 public class AprilTagDistanceAndID {
-
     private AprilTagProcessor aprilTagProcessor;
     private VisionPortal visionPortal;
     private ArrayList<AprilTagDetection> detectedTags = new ArrayList<>();
@@ -71,6 +70,14 @@ public class AprilTagDistanceAndID {
             }
         }
         return null;
+    }
+
+    public double getShooterRPM(double distanceInches) {
+        double a = 0.727;
+        double b = -50.3;
+        double c = 3714;
+
+        return a*distanceInches*distanceInches + b*distanceInches + c;
     }
 
     public void stop(){

@@ -19,15 +19,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name = "RedSideFarAuto", group = "Over-caffeinated")
 public class RedSideFarAuto extends OpMode {
-
-    // PID constants
-    private static final double SHOOTER_KP = 0.0007;
-    private static final double SHOOTER_KI = 0.0005;
-    private static final double SHOOTER_KD = 0.0;
     private static final double TICKS_PER_REV = 28.0;
-    private static final double TARGET_RPM = 3700;
-    private static final double MAX_INTEGRAL = 500.0; // anti-windup clamp
-    private int TARGET_RPM2 = 3700;
+    private static final double TARGET_RPM = 3550;
+    private static final double MAX_INTEGRAL = 500.0;
     private ElapsedTime timer = new ElapsedTime();
     private double currentVelocity, currentRPM, error, lastError, integralSum, derivative, output, deltaTime;
     private double lastTimestamp = 0.0;
@@ -36,7 +30,6 @@ public class RedSideFarAuto extends OpMode {
     private DcMotorEx shooterMotor;
     private CRServo gate;
     private DcMotor noodleIntake, rubberIntakeMotor;
-    double now;
 
     // Pathing
     private Follower follower;
@@ -44,50 +37,38 @@ public class RedSideFarAuto extends OpMode {
     private int pathState = 0;
     private int counter = 0;
     private boolean isShooting = false;
-    private double currentTargetRPM = TARGET_RPM;
     private double waitTime = 0;
     private int ballNum = 0;
 
-    // PID variables
-    //private double currentVelocity, currentRPM, error, lastError, integralSum, derivative, output, deltaTime;
+    // Shooter readiness
+    private double rpmStableStart = 0;
 
     // Poses
     private final Pose startPose = new Pose(87, 9, Math.toRadians(90));
-    private final Pose scorePose = new Pose(80, 90, Math.toRadians(45));
-    private final Pose set3frontPose = new Pose(90, 55, Math.toRadians(0));
+    private final Pose scorePose = new Pose(80, 90, Math.toRadians(44));
+    private final Pose set3frontPose = new Pose(90, 60, Math.toRadians(0));
     private final Pose set3controlPoint = new Pose(80, 41);
-    private final Pose set3pickPose = new Pose(160, 60, Math.toRadians(0));
+    private final Pose set3pickPose = new Pose(165, 63, Math.toRadians(0));
     private final Pose moveOutPose = new Pose(10, 10, Math.toRadians(90));
 
     // Paths
     private Path scorePreload;
-    private PathChain frontSet3, pickupSet3, scoreSet3, frontSet2, shake, shakeBack, pickupSet2, scoreSet2, moveOut;
-
-    private Pose computeRetreatPose(Pose origin, double distanceInches) {
-        double heading = origin.getHeading();
-        double dx = -distanceInches * Math.cos(heading);
-        double dy = -distanceInches * Math.sin(heading);
-        return new Pose(origin.getX() + dx, origin.getY() + dy, heading);
-    }
+    private PathChain frontSet3, pickupSet3, scoreSet3, moveOut;
 
     public void buildPaths() {
-        //Score Preload (backwards 30 inches)
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45));
 
-        //Drive in front of set 3
         frontSet3 = follower.pathBuilder()
                 .addPath(new BezierCurve(scorePose, set3controlPoint, set3frontPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), set3frontPose.getHeading())
                 .build();
 
-        //Pickup set 3
         pickupSet3 = follower.pathBuilder()
                 .addPath(new BezierLine(set3frontPose, set3pickPose))
                 .setConstantHeadingInterpolation(set3pickPose.getHeading())
                 .build();
 
-        //Score set 3
         scoreSet3 = follower.pathBuilder()
                 .addPath(new BezierLine(set3pickPose, scorePose))
                 .setLinearHeadingInterpolation(set3pickPose.getHeading(), scorePose.getHeading())
@@ -97,7 +78,6 @@ public class RedSideFarAuto extends OpMode {
                 .addPath(new BezierLine(scorePose, moveOutPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), moveOutPose.getHeading())
                 .build();
-
     }
 
     public void setPathState(int pState) {
@@ -115,68 +95,74 @@ public class RedSideFarAuto extends OpMode {
 
         double elapsed = ballTimer.getElapsedTime();
 
-        if (elapsed >= 1000 && elapsed < 1500) {
+        if (elapsed >= 500 && elapsed < 1000) {
             gate.setPower(-1);
-        } else if (elapsed >= 1500) {
+        } else if (elapsed >= 1300) {
             gate.setPower(0);
             isShooting = false;
         }
     }
 
-    public void updateShooterPID(double rpm) {
+    // Tuned PID + Feedforward constants
+    private static final double SHOOTER_KP = 0.0008;   // proportional gain
+    private static final double SHOOTER_KI = 0.00015;  // integral gain
+    private static final double SHOOTER_KD = 0.0;      // derivative often unnecessary
+    private static final double SHOOTER_KF = 0.00027;  // feedforward tuned to motor
+
+    public void updateShooterPID() {
         currentVelocity = shooterMotor.getVelocity();
-        currentRPM = (currentVelocity / 28.0) * 60.0;
+        currentRPM = (currentVelocity / TICKS_PER_REV) * 60.0;
 
-        if (rpm < 200) {
-            integralSum = 0;
-        }
+        error = TARGET_RPM - currentRPM;
 
-        now = timer.seconds();
-        deltaTime = now - lastTimestamp;
-        lastTimestamp = now;
+        double currentTime = timer.seconds();
+        deltaTime = currentTime - lastTimestamp;
+        lastTimestamp = currentTime;
+        if (deltaTime <= 0) return;
 
-        if (deltaTime <= 0) deltaTime = 0.001;
-
-        error = rpm - currentRPM;
+        // Integral with anti-windup
         integralSum += error * deltaTime;
+        integralSum = Math.max(Math.min(integralSum, MAX_INTEGRAL), -MAX_INTEGRAL);
+
+        // Derivative (optional, kept at 0 here)
         derivative = (error - lastError) / deltaTime;
 
-        output = (SHOOTER_KP * error) + (SHOOTER_KI * integralSum) + (SHOOTER_KD * derivative);
-        output = Math.max(Math.min(output, 1.0), -1.0);
+        // Feedforward + PID
+        output = (SHOOTER_KF * TARGET_RPM) +
+                (SHOOTER_KP * error) +
+                (SHOOTER_KI * integralSum) +
+                (SHOOTER_KD * derivative);
 
+        // Clamp to motor power range
+        output = Math.max(Math.min(output, 1.0), -1.0);
         shooterMotor.setPower(output);
 
         lastError = error;
     }
 
+    public boolean isShooterReady() {
+        return Math.abs(currentRPM - TARGET_RPM) <= 100;
+    }
+
+
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 1:
-                updateShooterPID(TARGET_RPM);
                 follower.followPath(scorePreload);
                 telemetry.addLine("Moving back to score preload");
-                waitTime = 2000;
+                waitTime = 1000;
                 break;
             case 2: case 3: case 4:
-                if (currentRPM < 150 + TARGET_RPM && TARGET_RPM - 150 < currentRPM) {
+                if (isShooterReady()) {
                     shootBall();
                     telemetry.addLine("Scoring preload balls");
-                    waitTime = 300;
+                    waitTime = 100;
                 } else {
-                    if (TARGET_RPM - 150 > currentRPM) {
-                        TARGET_RPM2 += 100;
-                        currentTargetRPM = TARGET_RPM2;
-                        waitTime = 500;
-                    } else if (TARGET_RPM + 150 < currentRPM) {
-                        TARGET_RPM2 -= 100;
-                        currentTargetRPM = TARGET_RPM2;
-                        waitTime = 500;
-                    }
                     counter -= 1;
                 }
                 break;
             case 5:
-                waitTime = 1000;
+                waitTime = 100;
                 break;
             case 6:
                 rubberIntakeMotor.setPower(1);
@@ -197,8 +183,12 @@ public class RedSideFarAuto extends OpMode {
                 waitTime = 2000;
                 break;
             case 9: case 10: case 11:
-                shootBall();
-                waitTime = 100;
+                if (isShooterReady()) {
+                    shootBall();
+                    waitTime = 100;
+                } else {
+                    counter -= 1;
+                }
                 break;
             case 12:
                 follower.followPath(moveOut);
@@ -215,12 +205,9 @@ public class RedSideFarAuto extends OpMode {
         }
     }
 
-
-
     @Override
     public void loop() {
-
-        updateShooterPID(currentTargetRPM);
+        updateShooterPID();
         follower.update();
 
         double elapsedTime = pathTimer.getElapsedTime();

@@ -18,6 +18,7 @@ public class AprilTagDistanceAndID {
     private VisionPortal visionPortal;
     private ArrayList<AprilTagDetection> detectedTags = new ArrayList<>();
     private Telemetry telemetry;
+    VisionPortal.Builder builder = new VisionPortal.Builder();
 
     public void init(HardwareMap hwMap, Telemetry telemetry){
         this.telemetry = telemetry;
@@ -34,7 +35,7 @@ public class AprilTagDistanceAndID {
         builder.setCamera(hwMap.get(WebcamName.class, "Webcam 1"));
         builder.setCameraResolution(new Size(640, 480));
         builder.addProcessor(aprilTagProcessor);
-
+        builder.enableLiveView(true);
         visionPortal = builder.build();
     }
 
@@ -69,16 +70,10 @@ public class AprilTagDistanceAndID {
         return null;
     }
     public double getShooterRPM(double distanceInches) {
-//        double a = 0.287;
-//        double b = -9.7;
-//        double c = 2771.2;
-//
-//        return a*distanceInches*distanceInches + b*distanceInches + c;
+        double m = 9.6;
+        double b = 1300;
 
-        double m = 13.7;
-        double b = 2430;
-
-        return 13.7*distanceInches + b;
+        return m*distanceInches + b;
     }
 
     public void stop(){

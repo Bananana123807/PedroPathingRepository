@@ -12,10 +12,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.WIP.Constants;
-@Autonomous(name="BackMoveOutRed", group = "OCE")
-public class BackMoveOutRed extends OpMode {
-    private final Pose start = new Pose(0, 0, Math.toRadians(90));
-    private final Pose end = new Pose(18, 5, Math.toRadians(90));
+@Disabled
+@Autonomous(name="FrontMoveOutRed", group = "OCE")
+public class FrontMoveOutRed extends OpMode {
+    private final Pose start = new Pose(0, 0, Math.toRadians(36));
+    private final Pose end = new Pose(-30, 30, Math.toRadians(0));
     private Path path1;
     private int pathState = 0;
     private Follower follower;

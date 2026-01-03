@@ -54,10 +54,10 @@ public class RedSideCloseAuto extends OpMode {
     private final Pose shakePose = new Pose(101, 93, Math.toRadians(36));
     private final Pose set1frontPose = new Pose(90, 75, Math.toRadians(0));
     private final Pose set1controlPoint = new Pose(60, 90);
-    private final Pose set1pickPose = new Pose(128, 80, Math.toRadians(0));
+    private final Pose set1pickPose = new Pose(128, 85, Math.toRadians(0));
     private final Pose set2frontPose = new Pose(90, 39, Math.toRadians(0));
     private final Pose set2controlPoint = new Pose(70, 84);
-    private final Pose set2pickPose = new Pose(137, 46, Math.toRadians(0));
+    private final Pose set2pickPose = new Pose(137, 50, Math.toRadians(0));
     private final Pose set2OutPose = new Pose(90, 40, Math.toRadians(0));
     private final Pose moveOutPose = new Pose(120, 85, Math.toRadians(0));
 
@@ -76,7 +76,7 @@ public class RedSideCloseAuto extends OpMode {
     public void buildPaths() {
         //Score Preload (backwards 30 inches)
         scorePreload = new Path(new BezierLine(startPose, scorePose));
-        scorePreload.setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(45));
+        scorePreload.setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(40));
 
         //Drive in front of set 1
         frontSet1 = follower.pathBuilder()

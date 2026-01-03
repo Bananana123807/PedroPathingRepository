@@ -12,13 +12,13 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Supplier;
@@ -29,18 +29,22 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name="PewPewTeleop", group="TeleOp")
+import com.qualcomm.robotcore.util.Range;
+@TeleOp(name="PewPewTeleOP", group="TeleOp")
 public class PewPewTeleOP extends OpMode {
     double targetRPM = 0;
     double currentRPM, frontLeftPower, frontRightPower, botHeading, backLeftPower, backRightPower, rawHeading, output;
     double mode = 1;
-    double kP = 0.0007;
-    double kI = 0.0005;
-    double kD = 0;
-    double integralSum = 0;
-    double lastError = 0;
+    double velocityY = 1500;
+    double velocityB = 1700;
+    double velocityA = 2000;
+    double velocityX = 2500;
+    double curTargetVelocity = velocityY;
+    double F = 12.504;
+    double P = 45.62;
+    double[] stepSizes = {10.0, 1.0, 0.1, 0.001, 0.0001};
+    int stepIndex = 0;
     ElapsedTime timer = new ElapsedTime();
     private DcMotor leftFront, leftBack, rightFront, rightBack, noodleIntake, rubberIntakeMotor;
     private DcMotorEx shooterMotor;
@@ -49,9 +53,6 @@ public class PewPewTeleOP extends OpMode {
     boolean rubberToggle = false;
     public double headingOffset = 0;
     AprilTagDistanceAndID aprilTagWebcam = new AprilTagDistanceAndID();
-    private static final double SHOOTER_KP = 0.0007;
-    private static final double SHOOTER_KI = 0.0005;
-    private static final double SHOOTER_KD = 0.0;
     private static final double TICKS_PER_REV = 28.0;
     private ElapsedTime apriltimer = new ElapsedTime();
     private double currentVelocity, now, error, derivative, deltaTime;
@@ -68,68 +69,7 @@ public class PewPewTeleOP extends OpMode {
     boolean autoApril = false;
     double dInches = 0;
     double rpm = 0;
-
-//    double getHeading() {
-//        YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
-//        return angles.getYaw(AngleUnit.DEGREES);
-//    }
-//
-//    public void turnRelative(double deltaAngle) {
-//        double startHeading = getHeading();
-//        double targetHeading = AngleUnit.normalizeDegrees(startHeading + deltaAngle);
-//
-//        turnToHeading(targetHeading);
-//    }
-//
-//    public void turnToHeading(double targetAngle) {
-//        double Kp = 0.01;
-//
-//        while (opModeIsActive()) {
-//            double current = getHeading();
-//            double error = AngleUnit.normalizeDegrees(targetAngle - current);
-//
-//            if (Math.abs(error) < 2) break;
-//
-//            double power = Kp * error;
-//
-//            leftFront.setPower(power);
-//            leftBack.setPower(power);
-//            rightFront.setPower(-power);
-//            rightBack.setPower(-power);
-//        }
-//
-//        leftFront.setPower(0);
-//        leftBack.setPower(0);
-//        rightFront.setPower(0);
-//        rightBack.setPower(0);
-//    }
-
-    public void updateShooterPID(double APRIL_TARGET_RPM) {
-        currentVelocity = shooterMotor.getVelocity();
-        currentRPM = (currentVelocity / 28.0) * 60.0;
-
-        if (APRIL_TARGET_RPM < 200) {
-            integralSum = 0;
-        }
-
-        now = timer.seconds();
-        deltaTime = now - lastTimestamp;
-        lastTimestamp = now;
-
-        if (deltaTime <= 0) deltaTime = 0.001;
-
-        error = APRIL_TARGET_RPM - currentRPM;
-        integralSum += error * deltaTime;
-        derivative = (error - lastError) / deltaTime;
-
-        output = (kP * error) + (kI * integralSum) + (kD * derivative);
-        output = Math.max(Math.min(output, 1.0), -1.0);
-
-        shooterMotor.setPower(output);
-
-        lastError = error;
-    }
-
+    double rx;
     public void displayBallColorTelemetry(int detectedID){
         if (detectedID == 21) {
             ball1 = "Green";
@@ -148,41 +88,21 @@ public class PewPewTeleOP extends OpMode {
         telemetry.addData("ball1Color: ", ball1);
         telemetry.addData("ball2Color: ", ball2);
         telemetry.addData("ball3Color: ", ball3);
-    };
-//    public void keep_motors_same() {
-//        double left_ticks_per_rev = 537.6;
-//        double left_wheel_diameter = 31.75; // make sure units match
-//        double left_wheel_circum = Math.PI * left_wheel_diameter;
-//
-//        int left_target_tick = (int)((12 / left_wheel_circum) * left_ticks_per_rev);
-//
-//        double right_ticks_per_rev = 537.6;
-//        double right_wheel_diameter = 31.75; // make sure units match
-//        double right_wheel_circum = Math.PI * right_wheel_diameter;
-//
-//        int right_target_tick = (int)((12 / right_wheel_circum) * right_ticks_per_rev);
-//
-//
-//        leftRubberIntakeMotor.setTargetPosition(left_target_tick);
-//        leftRubberIntakeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        leftRubberIntakeMotor.setPower(0.5);
-//
-//        rightRubberIntakeMotor.setTargetPosition(right_target_tick); // match target
-//        rightRubberIntakeMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        rightRubberIntakeMotor.setPower(0.5);
-//
-//    }
-
+    }
 
     @Override
     public void init() {
 
         lastTimestamp = timer.seconds();
-        integralSum = 0;
-        lastError = 0;
 
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
         shooterMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P,0,0,F);
+        shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+        telemetry.addLine("Init complete");
+
         gate = hardwareMap.get(CRServo.class, "gate");
         aprilTagWebcam.init(hardwareMap, telemetry);
 
@@ -224,69 +144,15 @@ public class PewPewTeleOP extends OpMode {
     }
 
     @Override
-    public void start(){
-        targetRPM = 2700;
-        updateShooterPID(targetRPM);
-    }
+    public void start(){targetRPM = 900;}
 
     @Override
     public void loop(){
 
-//            if(gamepad1.left_bumper && !isTurning) {
-//                isTurning = true;
-//                turnTargetHeading = Math.toRadians(36);
-//            }
-//
-//            if(gamepad1.right_bumper && !isTurning) {
-//                isTurning = true;
-//                turnTargetHeading = Math.toRadians(0);
-//            }
-
             if(gamepad2.dpadLeftWasReleased()) {
-                rubberIntakeMotor.setPower(0.8);
+                rubberIntakeMotor.setPower(-0.67);
             } else if(gamepad2.dpadRightWasReleased()) {
                 rubberIntakeMotor.setPower(0);
-            }
-
-            double y = -gamepad1.left_stick_x;
-            double x = -gamepad1.left_stick_y;
-            double rx = gamepad1.right_stick_x;
-
-            rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-            botHeading = normalizeRadians(rawHeading - headingOffset);
-
-//            if (isTurning) {
-//                double turnError = normalizeRadians(turnTargetHeading - botHeading);
-//
-//                if (Math.abs(turnError) < Math.toRadians(1)) {
-//                    isTurning = false;
-//                    rx = 0;
-//                } else {
-//                    rx = turnError * 0.7;
-//                }
-//            }
-
-            rx = Range.clip(rx, -1, 1);
-
-            double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-            double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
-
-            double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1.0);
-            frontLeftPower = (rotY + rotX + rx) / denominator;
-            backLeftPower = (rotY - rotX + rx) / denominator;
-            frontRightPower = (rotY - rotX - rx) / denominator;
-            backRightPower = (rotY + rotX - rx) / denominator;
-
-            if (gamepad1.right_trigger > 0.8){
-                leftFront.setPower(frontLeftPower/2);
-                leftBack.setPower(backLeftPower/2);
-                rightFront.setPower(frontRightPower/2);
-                rightBack.setPower(backRightPower/2);
-            } else {
-                leftFront.setPower(frontLeftPower);
-                leftBack.setPower(backLeftPower);
-                rightFront.setPower(frontRightPower);
-                rightBack.setPower(backRightPower);
             }
 
             if (gamepad2.left_bumper) noodleIntake.setPower(0.75);
@@ -297,13 +163,15 @@ public class PewPewTeleOP extends OpMode {
                 headingOffset = Math.toRadians(90);
             }
 
-            if (gamepad2.dpadUpWasReleased()) {
+            if (gamepad1.dpadUpWasReleased()) {
                 autoApril = true;
-            } else if (gamepad2.dpadDownWasReleased()) {
+            } else if (gamepad1.dpadDownWasReleased()) {
                 autoApril = false;
             }
 
             if (!autoApril) {
+                rx = gamepad1.right_stick_x;
+
                 if (gamepad2.left_trigger > 0.8) {
                     gate.setPower(1);
                 } else if (gamepad2.right_trigger > 0.8) {
@@ -311,11 +179,62 @@ public class PewPewTeleOP extends OpMode {
                 } else {
                     gate.setPower(0);
                 }
-                if (gamepad2.y) targetRPM = 2700;
-                if (gamepad2.b) targetRPM = 2950;
-                if (gamepad2.a) targetRPM = 3500;
-                if (gamepad2.x) targetRPM = 4500;
-                updateShooterPID(targetRPM);
+
+                if (gamepad2.yWasPressed()) curTargetVelocity = velocityY;
+                if (gamepad2.bWasPressed()) curTargetVelocity = velocityB;
+                if (gamepad2.aWasReleased()) curTargetVelocity = velocityA;
+                if (gamepad2.xWasReleased()) curTargetVelocity = velocityX;
+//
+//                if (gamepad1.xWasReleased()) stepIndex = (stepIndex + 1) % stepSizes.length;
+//
+//                if (gamepad1.dpadLeftWasPressed()) F -= stepSizes[stepIndex];
+//                if (gamepad1.dpadRightWasPressed()) F += stepSizes[stepIndex];
+//                if (gamepad1.dpadUpWasPressed()) P -= stepSizes[stepIndex];
+//                if (gamepad1.dpadDownWasPressed()) P += stepSizes[stepIndex];
+
+                PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P,0,0,F);
+                shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+
+                shooterMotor.setVelocity(curTargetVelocity);
+
+                double curVelocity = shooterMotor.getVelocity();
+                double error = curTargetVelocity - curVelocity;
+
+                telemetry.addData("Target velocity", curTargetVelocity);
+                telemetry.addData("Current velocity", "%.2f", curVelocity);
+                telemetry.addData("Error", "%.2f", error);
+                telemetry.addData("Tuning P", "%.4f (D-Pad U/D)", P);
+                telemetry.addData("Tuning F", "%.4f (D-Pad L/R", F);
+                telemetry.addData("Step Size", "%.4f (X Button)", stepSizes[stepIndex]);
+
+                double y = -gamepad1.left_stick_x;
+                double x = -gamepad1.left_stick_y;
+
+                rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+                botHeading = normalizeRadians(rawHeading - headingOffset);
+
+                double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+                double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+                double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1.0);
+                frontLeftPower = (rotY + rotX + rx) / denominator;
+                backLeftPower = (rotY - rotX + rx) / denominator;
+                frontRightPower = (rotY - rotX - rx) / denominator;
+                backRightPower = (rotY + rotX - rx) / denominator;
+
+                if (gamepad1.right_trigger > 0.8){
+                    leftFront.setPower(frontLeftPower/2);
+                    leftBack.setPower(backLeftPower/2);
+                    rightFront.setPower(frontRightPower/2);
+                    rightBack.setPower(backRightPower/2);
+                } else {
+                    leftFront.setPower(frontLeftPower);
+                    leftBack.setPower(backLeftPower);
+                    rightFront.setPower(frontRightPower);
+                    rightBack.setPower(backRightPower);
+                }
+
+                rx = Range.clip(rx, -1, 1);
             }
 
             //APRIL TAG PID DISTANCE
@@ -348,29 +267,89 @@ public class PewPewTeleOP extends OpMode {
 
                 if (det24 != null) {
 
-//                    d = det24.ftcPose.y;
-//
-//                    det24x = (det24.ftcPose.x / 2.54) * -1;
-//                    double yaw = det24.ftcPose.yaw;
-//
-//
-//                    telemetry.addData("Yaw off: ", det24.ftcPose.yaw);
-//                    telemetry.addData("Angle off: ", angleOff);
-//                    double a = Math.toDegrees(Math.atan(det24x/d));
-//                    double b = Math.toRadians(36) - Math.toRadians(a);
-//                    double angleOff = 90 - Math.toDegrees(b);
+                    d = det24.ftcPose.y;
+
+                    double yawError = -1*(det24.ftcPose.yaw); // radians
+                    double kPYaw = 0.02; // tune this
+
+                    // Override joystick rotation with PID correction
+                    rx = Range.clip(kPYaw * yawError, -0.5, 0.5);
+                    if (Math.abs(yawError) < Math.toRadians(2)) {
+                        rx = 0;
+                    }
+
+                    // --- Drive math with AprilTag correction ---
+                    double y = -gamepad1.left_stick_x;
+                    double x = -gamepad1.left_stick_y;
+
+                    rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+                    botHeading = normalizeRadians(rawHeading - headingOffset);
+
+                    double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+                    double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+                    double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1.0);
+                    frontLeftPower = (rotY + rotX + rx) / denominator;
+                    backLeftPower = (rotY - rotX + rx) / denominator;
+                    frontRightPower = (rotY - rotX - rx) / denominator;
+                    backRightPower = (rotY + rotX - rx) / denominator;
+
+                    if (gamepad1.right_trigger > 0.8) {
+                        leftFront.setPower(frontLeftPower / 2);
+                        leftBack.setPower(backLeftPower / 2);
+                        rightFront.setPower(frontRightPower / 2);
+                        rightBack.setPower(backRightPower / 2);
+                    } else {
+                        leftFront.setPower(frontLeftPower);
+                        leftBack.setPower(backLeftPower);
+                        rightFront.setPower(frontRightPower);
+                        rightBack.setPower(backRightPower);
+                    }
+
+                    telemetry.addData("Yaw off: ", yawError);
 
                     dInches = d / 2.54;
                     double rpm = aprilTagWebcam.getShooterRPM(dInches);
-                    updateShooterPID(rpm);
-                } else {
-                    gate.setPower(0);
-                }
 
-                if (Math.abs(currentRPM - rpm) < 150 && det24 != null) {
-                    gate.setPower(-1);
+                    shooterMotor.setVelocity(rpm);
+
+                    if (Math.abs(currentRPM - rpm) < 100) {
+                        gate.setPower(-1);
+                    } else {
+                        gate.setPower(1);
+                    }
+
                 } else {
-                    gate.setPower(1);
+                    rx = gamepad1.right_stick_x;
+
+                    gate.setPower(0);
+
+                    double y = -gamepad1.left_stick_x;
+                    double x = -gamepad1.left_stick_y;
+
+                    rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+                    botHeading = normalizeRadians(rawHeading - headingOffset);
+
+                    double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+                    double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+                    double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1.0);
+                    frontLeftPower = (rotY + rotX + rx) / denominator;
+                    backLeftPower = (rotY - rotX + rx) / denominator;
+                    frontRightPower = (rotY - rotX - rx) / denominator;
+                    backRightPower = (rotY + rotX - rx) / denominator;
+
+                    if (gamepad1.right_trigger > 0.8){
+                        leftFront.setPower(frontLeftPower/2);
+                        leftBack.setPower(backLeftPower/2);
+                        rightFront.setPower(frontRightPower/2);
+                        rightBack.setPower(backRightPower/2);
+                    } else {
+                        leftFront.setPower(frontLeftPower);
+                        leftBack.setPower(backLeftPower);
+                        rightFront.setPower(frontRightPower);
+                        rightBack.setPower(backRightPower);
+                    }
                 }
 
                 telemetry.addData("Distance (in)", dInches);

@@ -39,7 +39,7 @@ public class PewPewTeleOP extends OpMode {
     double velocityY = 1500;
     double velocityB = 1700;
     double velocityA = 2000;
-    double velocityX = 2500;
+    double velocityX = 200;
     double curTargetVelocity = velocityY;
     double F = 12.504;
     double P = 45.62;
@@ -202,10 +202,6 @@ public class PewPewTeleOP extends OpMode {
 
                 telemetry.addData("Target velocity", curTargetVelocity);
                 telemetry.addData("Current velocity", "%.2f", curVelocity);
-                telemetry.addData("Error", "%.2f", error);
-                telemetry.addData("Tuning P", "%.4f (D-Pad U/D)", P);
-                telemetry.addData("Tuning F", "%.4f (D-Pad L/R", F);
-                telemetry.addData("Step Size", "%.4f (X Button)", stepSizes[stepIndex]);
 
                 double y = -gamepad1.left_stick_x;
                 double x = -gamepad1.left_stick_y;
@@ -269,6 +265,21 @@ public class PewPewTeleOP extends OpMode {
 
                     d = det24.ftcPose.y;
 
+                    dInches = d / 2.54;
+                    double rpm = aprilTagWebcam.getShooterRPM(dInches);
+
+                    shooterMotor.setVelocity(rpm);
+                    currentRPM = shooterMotor.getVelocity();
+
+                    telemetry.addData("TargetRPM: ", rpm);
+                    telemetry.addData("CurrentRPM: ", currentRPM);
+
+                    if (Math.abs(currentRPM - rpm) < 100) {
+                        gate.setPower(-1);
+                    } else {
+                        gate.setPower(1);
+                    }
+
                     double yawError = -1*(det24.ftcPose.yaw); // radians
                     double kPYaw = 0.02; // tune this
 
@@ -307,17 +318,6 @@ public class PewPewTeleOP extends OpMode {
                     }
 
                     telemetry.addData("Yaw off: ", yawError);
-
-                    dInches = d / 2.54;
-                    double rpm = aprilTagWebcam.getShooterRPM(dInches);
-
-                    shooterMotor.setVelocity(rpm);
-
-                    if (Math.abs(currentRPM - rpm) < 100) {
-                        gate.setPower(-1);
-                    } else {
-                        gate.setPower(1);
-                    }
 
                 } else {
                     rx = gamepad1.right_stick_x;

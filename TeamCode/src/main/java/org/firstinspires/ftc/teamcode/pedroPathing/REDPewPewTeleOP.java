@@ -31,15 +31,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import com.qualcomm.robotcore.util.Range;
-@TeleOp(name="PewPewTeleOP", group="TeleOp")
-public class PewPewTeleOP extends OpMode {
+@TeleOp(name="REDPewPewTeleOP", group="TeleOp")
+public class REDPewPewTeleOP extends OpMode {
     double targetRPM = 0;
     double currentRPM, frontLeftPower, frontRightPower, botHeading, backLeftPower, backRightPower, rawHeading, output;
-    double mode = 1;
-    double velocityY = 1500;
-    double velocityB = 1700;
-    double velocityA = 2000;
-    double velocityX = 200;
+    double velocityY = 1400;
+    double velocityB = 1500;
+    double velocityA = 1700;
+    double velocityX = 600;
     double curTargetVelocity = velocityY;
     double F = 12.504;
     double P = 45.62;
@@ -118,7 +117,9 @@ public class PewPewTeleOP extends OpMode {
         leftBack.setDirection(DcMotor.Direction.REVERSE);
         leftFront.setDirection(DcMotor.Direction.REVERSE);
 
-        rubberIntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        gate.setDirection(CRServo.Direction.FORWARD);
+
+        rubberIntakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -150,12 +151,12 @@ public class PewPewTeleOP extends OpMode {
     public void loop(){
 
             if(gamepad2.dpadLeftWasReleased()) {
-                rubberIntakeMotor.setPower(-0.67);
+                rubberIntakeMotor.setPower(-0.85);
             } else if(gamepad2.dpadRightWasReleased()) {
-                rubberIntakeMotor.setPower(0);
+                rubberIntakeMotor.setPower(0.1);
             }
 
-            if (gamepad2.left_bumper) noodleIntake.setPower(0.75);
+            if (gamepad2.left_bumper) noodleIntake.setPower(1);
             else if (gamepad2.right_bumper) noodleIntake.setPower(0);
 
             if (gamepad1.b) {
@@ -184,13 +185,6 @@ public class PewPewTeleOP extends OpMode {
                 if (gamepad2.bWasPressed()) curTargetVelocity = velocityB;
                 if (gamepad2.aWasReleased()) curTargetVelocity = velocityA;
                 if (gamepad2.xWasReleased()) curTargetVelocity = velocityX;
-//
-//                if (gamepad1.xWasReleased()) stepIndex = (stepIndex + 1) % stepSizes.length;
-//
-//                if (gamepad1.dpadLeftWasPressed()) F -= stepSizes[stepIndex];
-//                if (gamepad1.dpadRightWasPressed()) F += stepSizes[stepIndex];
-//                if (gamepad1.dpadUpWasPressed()) P -= stepSizes[stepIndex];
-//                if (gamepad1.dpadDownWasPressed()) P += stepSizes[stepIndex];
 
                 PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P,0,0,F);
                 shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
@@ -263,24 +257,34 @@ public class PewPewTeleOP extends OpMode {
 
                 if (det24 != null) {
 
-                    d = det24.ftcPose.y;
+                    if (gamepad2.yWasPressed()) curTargetVelocity = velocityY;
+                    if (gamepad2.bWasPressed()) curTargetVelocity = velocityB;
+                    if (gamepad2.aWasReleased()) curTargetVelocity = velocityA;
+                    if (gamepad2.xWasReleased()) curTargetVelocity = velocityX;
 
-                    dInches = d / 2.54;
-                    double rpm = aprilTagWebcam.getShooterRPM(dInches);
+                    PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P,0,0,F);
+                    shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
 
-                    shooterMotor.setVelocity(rpm);
-                    currentRPM = shooterMotor.getVelocity();
+                    shooterMotor.setVelocity(curTargetVelocity);
 
-                    telemetry.addData("TargetRPM: ", rpm);
-                    telemetry.addData("CurrentRPM: ", currentRPM);
+//                    d = det24.ftcPose.y;
 
-                    if (Math.abs(currentRPM - rpm) < 100) {
-                        gate.setPower(-1);
-                    } else {
-                        gate.setPower(1);
-                    }
+//                    dInches = d / 2.54;
+//                    double rpm = aprilTagWebcam.getShooterRPM(dInches);
+//
+//                    shooterMotor.setVelocity(rpm);
+//                    currentRPM = shooterMotor.getVelocity();
+//
+//                    telemetry.addData("TargetRPM: ", rpm);
+//                    telemetry.addData("CurrentRPM: ", currentRPM);
+//
+//                    if (Math.abs(currentRPM - rpm) < 100) {
+//                        gate.setPower(-1);
+//                    } else {
+//                        gate.setPower(1);
+//                    }
 
-                    double yawError = -1*(det24.ftcPose.yaw); // radians
+                    double yawError = -1*(det24.ftcPose.yaw) - Math.toRadians(8); // radians
                     double kPYaw = 0.02; // tune this
 
                     // Override joystick rotation with PID correction
@@ -351,6 +355,16 @@ public class PewPewTeleOP extends OpMode {
                         rightBack.setPower(backRightPower);
                     }
                 }
+
+                if (gamepad2.yWasPressed()) curTargetVelocity = velocityY;
+                if (gamepad2.bWasPressed()) curTargetVelocity = velocityB;
+                if (gamepad2.aWasReleased()) curTargetVelocity = velocityA;
+                if (gamepad2.xWasReleased()) curTargetVelocity = velocityX;
+
+                PIDFCoefficients pidfCoefficients = new PIDFCoefficients(P,0,0,F);
+                shooterMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+
+                shooterMotor.setVelocity(curTargetVelocity);
 
                 telemetry.addData("Distance (in)", dInches);
                 telemetry.addData("Output", output);
